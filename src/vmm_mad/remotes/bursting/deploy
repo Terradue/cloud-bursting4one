@@ -18,7 +18,8 @@
 
 $: << File.dirname(__FILE__)
 
-require 'bursting_driver'
+require 'bursting/factory'
+require 'bursting/factory'
 
 dfile = ARGV[0]
 host  = ARGV[1]
