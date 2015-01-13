@@ -21,7 +21,7 @@
 	</properties>
 	
 	<scm>
-		<connection>scm:git:git@github.com:Terradue/cloud-bursting4one.git</connection>
+		<connection>scm:git@github.com:Terradue/cloud-bursting4one.git</connection>
 		<developerConnection>scm:git@github.com:Terradue/cloud-bursting4one.git</developerConnection>
 		<url>https://github.com/Terradue/cloud-bursting4one.git</url>
 		<tag>HEAD</tag>
