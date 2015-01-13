@@ -48,6 +48,23 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.4</version>
+				<executions>
+					<execution>
+						<id>src-lib_dependencies</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>rpm-maven-plugin</artifactId>
 				<extensions>true</extensions>
@@ -81,7 +98,15 @@
 							</sources>
 						</mapping>
 						<mapping>
-							<directory>/usr/lib/t2/ruby</directory>
+							<directory>/usr/lib/t2/java</directory>
+							<sources>
+								<source>
+									<location>${project.build.directory}/lib</location>
+								</source>
+							</sources>
+						</mapping>
+						<mapping>
+							<directory>/var/lib/one/remotes/vmm/</directory>
 							<sources>
 								<source>
 									<location>${basedir}/src/vmm_mad/remotes/bursting</location>

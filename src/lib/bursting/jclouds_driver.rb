@@ -18,6 +18,10 @@
 require 'rjb'
 require 'bursting/bursting_driver'
 
+JARS = Dir.glob('/usr/lib/t2/java/*.jar').join(':')
+puts JARS
+Rjb::load(JARS, ['-Xmx512M'])
+
 class JcloudsDriver < BurstingDriver
 
   def deploy(id,host,xml_text)
