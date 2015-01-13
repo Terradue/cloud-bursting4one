@@ -67,7 +67,7 @@
 							<directory>/usr/lib/t2/ruby</directory>
 							<sources>
 								<source>
-									<location>${project.build.directory}/src/lib</location>
+									<location>${basedir}/src/lib</location>
 								</source>
 							</sources>
 						</mapping>
