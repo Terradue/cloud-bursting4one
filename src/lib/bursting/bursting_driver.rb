@@ -34,30 +34,37 @@ require 'uri'
 $: << RUBY_LIB_LOCATION
 $: << T2_RUBY_LIB_LOCATION
 
-require 'CommandManager'
-require 'scripts_common'
-require 'rexml/document'
-require 'VirtualMachineDriver'
+#require 'CommandManager'
+#require 'scripts_common'
+#require 'rexml/document'
+#require 'VirtualMachineDriver'
 
-# The main class for the Bursting driver
+# The parent class for the Bursting driver
 class BurstingDriver
 
-    ACTION          = VirtualMachineDriver::ACTION
-    POLL_ATTRIBUTE  = VirtualMachineDriver::POLL_ATTRIBUTE
-    VM_STATE        = VirtualMachineDriver::VM_STATE
+# ACTION          = VirtualMachineDriver::ACTION
+# POLL_ATTRIBUTE  = VirtualMachineDriver::POLL_ATTRIBUTE
+# VM_STATE        = VirtualMachineDriver::VM_STATE
 
-    # Constructor
-    def initialize(host)
+  def self.create(type,host)
+    case type
+    when :jclouds
+      JcloudsDriver.new(host)
+    else
+      raise "Bad bursting type: #{type}"
     end
+  end    
 
-    # DEPLOY action
-    def deploy(id, host, xml_text)
-    end
+  # Constructor
+  def initialize(host); end
 
-    # Shutdown an instance
-    def shutdown(deploy_id)
-        action(deploy_id, :shutdown)
-    end
+  # DEPLOY action
+  def deploy(id, host, xml_text); end
+
+  # Shutdown an instance
+  def shutdown(deploy_id)
+    action(deploy_id, :shutdown)
+  end
 
     # Reboot an instance
     def reboot(deploy_id)

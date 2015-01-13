@@ -16,7 +16,5 @@
 
 module Bursting; end
 
-require 'bursting/factory/driver_factory'
-require 'bursting/factory/jclouds_factory'
-require 'bursting/drivers/bursting_driver'
-require 'bursting/drivers/jclouds_driver'
+require 'bursting/bursting_driver'
+require 'bursting/jclouds_driver'

@@ -15,8 +15,12 @@
 # limitations under the License.                                             #
 # -------------------------------------------------------------------------- #
 
-require 'bursting_driver'
+require 'rjb'
+require 'bursting/bursting_driver'
 
 class JcloudsDriver < BurstingDriver
 
+  def deploy(id,host,xml_text)
+    puts Rjb::import('java.util.UUID').randomUUID().toString()
+  end
 end

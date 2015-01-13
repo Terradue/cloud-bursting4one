@@ -71,6 +71,14 @@
 								</source>
 							</sources>
 						</mapping>
+						<mapping>
+							<directory>/usr/lib/t2/ruby</directory>
+							<sources>
+								<source>
+									<location>${basedir}/src/vmm_mad/remotes/bursting</location>
+								</source>
+							</sources>
+						</mapping>
 					</mappings>
 
 					<provides>
