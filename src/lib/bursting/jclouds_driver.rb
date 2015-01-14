@@ -15,12 +15,20 @@
 # limitations under the License.                                             #
 # -------------------------------------------------------------------------- #
 
-require 'rjb'
 require 'bursting/bursting_driver'
+
 
 class JcloudsDriver < BurstingDriver
 
+  def initialize(host)
+
+    provider = "aws-ec2"
+    identity = ""
+    credential = ""
+
+  end
+
   def deploy(id,host,xml_text)
-    puts Rjb::import('java.util.UUID').randomUUID().toString()
+
   end
 end
