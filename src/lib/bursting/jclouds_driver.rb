@@ -17,7 +17,6 @@
 
 require 'bursting/bursting_driver'
 
-
 class JcloudsDriver < BurstingDriver
 
   def initialize(host)

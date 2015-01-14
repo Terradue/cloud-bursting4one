@@ -18,6 +18,7 @@
 	<properties>
 		<site>default</site>
 		<redmine.projectID>cloud-bursting4one</redmine.projectID>
+		<jclouds.version>1.8.1</jclouds.version>
 	</properties>
 	
 	<scm>
@@ -26,6 +27,14 @@
 		<url>https://github.com/Terradue/cloud-bursting4one.git</url>
 		<tag>HEAD</tag>
 	</scm>
+
+	<dependencies>
+    		<dependency>
+        		<groupId>org.apache.jclouds</groupId>
+        		<artifactId>jclouds-all</artifactId>
+        		<version>${jclouds.version}</version>
+      			</dependency>
+  	</dependencies>
 
 	<pluginRepositories>
 		<pluginRepository>
@@ -38,6 +47,23 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.4</version>
+				<executions>
+					<execution>
+						<id>src-lib_dependencies</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>rpm-maven-plugin</artifactId>
@@ -72,7 +98,15 @@
 							</sources>
 						</mapping>
 						<mapping>
-							<directory>/usr/lib/t2/ruby</directory>
+							<directory>/usr/lib/t2/java</directory>
+							<sources>
+								<source>
+									<location>${project.build.directory}/lib</location>
+								</source>
+							</sources>
+						</mapping>
+						<mapping>
+							<directory>/var/lib/one/remotes/vmm/</directory>
 							<sources>
 								<source>
 									<location>${basedir}/src/vmm_mad/remotes/bursting</location>
