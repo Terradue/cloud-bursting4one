@@ -34,17 +34,19 @@ require 'uri'
 $: << RUBY_LIB_LOCATION
 $: << T2_RUBY_LIB_LOCATION
 
-#require 'CommandManager'
-#require 'scripts_common'
-#require 'rexml/document'
-#require 'VirtualMachineDriver'
+require 'CommandManager'
+require 'scripts_common'
+require 'rexml/document'
+require 'VirtualMachineDriver'
 
 # The parent class for the Bursting driver
 class BurstingDriver
 
-# ACTION          = VirtualMachineDriver::ACTION
-# POLL_ATTRIBUTE  = VirtualMachineDriver::POLL_ATTRIBUTE
-# VM_STATE        = VirtualMachineDriver::VM_STATE
+  ACTION          = VirtualMachineDriver::ACTION
+  POLL_ATTRIBUTE  = VirtualMachineDriver::POLL_ATTRIBUTE
+  VM_STATE        = VirtualMachineDriver::VM_STATE
+  
+  DRIVER_CONF = ""
 
   def self.create(type,host)
     case type
@@ -56,7 +58,10 @@ class BurstingDriver
   end    
 
   # Constructor
-  def initialize(host); end
+  def initialize(host)
+    @host = host
+    load_configuration
+  end
 
   # DEPLOY action
   def deploy(id, host, xml_text); end
@@ -156,6 +161,10 @@ private
     #   not provided in the template.
     def load_default_template_values
     end
+
+  def load_configuration
+    @public_cloud_conf  = YAML::load(File.read(self.class::DRIVER_CONF))
+  end
 
     def in_silence
     end    

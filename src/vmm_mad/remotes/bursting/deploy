@@ -17,7 +17,7 @@
 # ---------------------------------------------------------------------------- #
 
 $: << File.dirname(__FILE__)
-$: << "/home/crossi/cloud-bursting4one/src/lib/" 
+$: << "/home/crossi/cloud-bursting4one/src/lib"
 
 require 'bursting'
 
@@ -25,7 +25,7 @@ dfile = ARGV[0]
 host  = ARGV[1]
 id    = ARGV[2]
 
-host = "dummy"
+host = "default"
 id = "dummy"
 dfile = "/home/crossi/cloud-bursting4one/pom.xml"
 

@@ -19,15 +19,18 @@ require 'bursting/bursting_driver'
 
 class JcloudsDriver < BurstingDriver
 
+  DRIVER_CONF = "#{ETC_LOCATION}/jclouds_driver.conf"
+
   def initialize(host)
+    super(host)
 
-    provider = "aws-ec2"
-    identity = ""
-    credential = ""
+    @instance_types = @public_cloud_conf['instance_types']
 
+    regions = @public_cloud_conf['regions']
+    @region = regions[host] || regions["default"]
   end
 
   def deploy(id,host,xml_text)
-
+    super()
   end
 end
