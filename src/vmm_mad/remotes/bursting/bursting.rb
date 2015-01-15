@@ -16,5 +16,5 @@
 
 module Bursting; end
 
-require 'bursting/bursting_driver'
-require 'bursting/jclouds_driver'
+require 'drivers/bursting_driver'
+require 'drivers/jclouds_driver'

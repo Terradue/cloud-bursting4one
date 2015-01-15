@@ -28,14 +28,6 @@
 		<tag>HEAD</tag>
 	</scm>
 
-	<dependencies>
-    		<dependency>
-        		<groupId>org.apache.jclouds</groupId>
-        		<artifactId>jclouds-all</artifactId>
-        		<version>${jclouds.version}</version>
-      			</dependency>
-  	</dependencies>
-
 	<pluginRepositories>
 		<pluginRepository>
 			<snapshots />
@@ -47,23 +39,6 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>2.4</version>
-				<executions>
-					<execution>
-						<id>src-lib_dependencies</id>
-						<phase>prepare-package</phase>
-						<goals>
-							<goal>copy-dependencies</goal>
-						</goals>
-						<configuration>
-							<outputDirectory>${project.build.directory}/lib</outputDirectory>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>rpm-maven-plugin</artifactId>
@@ -90,22 +65,6 @@
 					<description>Cloud bursting driver for OpenNebula</description>
 					<mappings>
 						<mapping>
-							<directory>/usr/lib/t2/ruby</directory>
-							<sources>
-								<source>
-									<location>${basedir}/src/lib</location>
-								</source>
-							</sources>
-						</mapping>
-						<mapping>
-							<directory>/usr/lib/t2/java</directory>
-							<sources>
-								<source>
-									<location>${project.build.directory}/lib</location>
-								</source>
-							</sources>
-						</mapping>
-						<mapping>
 							<directory>/var/lib/one/remotes/vmm/</directory>
 							<sources>
 								<source>
@@ -121,6 +80,7 @@
 
 					<requires>
 						<require>opennebula &gt;= 4.4</require>
+						<require>jclouds-cli</require>
 					</requires>
 		
 					<needarch>noarch</needarch>

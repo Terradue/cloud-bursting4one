@@ -15,7 +15,7 @@
 # limitations under the License.                                             #
 # -------------------------------------------------------------------------- #
 
-require 'bursting/bursting_driver'
+require 'drivers/bursting_driver'
 
 class JcloudsDriver < BurstingDriver
 
@@ -31,6 +31,6 @@ class JcloudsDriver < BurstingDriver
   end
 
   def deploy(id,host,xml_text)
-    super()
+    super
   end
 end

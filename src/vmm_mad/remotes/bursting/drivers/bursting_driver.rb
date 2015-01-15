@@ -25,14 +25,11 @@ else
     ETC_LOCATION      = ONE_LOCATION + "/etc/" if !defined?(ETC_LOCATION)
 end
 
-T2_RUBY_LIB_LOCATION = "/usr/lib/t2/ruby"
-
 require 'yaml'
 require 'rubygems'
 require 'uri'
 
 $: << RUBY_LIB_LOCATION
-$: << T2_RUBY_LIB_LOCATION
 
 require 'CommandManager'
 require 'scripts_common'
