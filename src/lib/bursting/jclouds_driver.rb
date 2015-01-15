@@ -15,16 +15,22 @@
 # limitations under the License.                                             #
 # -------------------------------------------------------------------------- #
 
-require 'rjb'
 require 'bursting/bursting_driver'
-
-JARS = Dir.glob('/usr/lib/t2/java/*.jar').join(':')
-puts JARS
-Rjb::load(JARS, ['-Xmx512M'])
 
 class JcloudsDriver < BurstingDriver
 
+  DRIVER_CONF = "#{ETC_LOCATION}/jclouds_driver.conf"
+
+  def initialize(host)
+    super(host)
+
+    @instance_types = @public_cloud_conf['instance_types']
+
+    regions = @public_cloud_conf['regions']
+    @region = regions[host] || regions["default"]
+  end
+
   def deploy(id,host,xml_text)
-    puts Rjb::import('java.util.UUID').randomUUID().toString()
+    super()
   end
 end
