@@ -19,7 +19,59 @@ require 'drivers/bursting_driver'
 
 class JcloudsDriver < BurstingDriver
 
-  DRIVER_CONF = "#{ETC_LOCATION}/jclouds_driver.conf"
+  DRIVER_CONF    = "#{ETC_LOCATION}/jclouds_driver.conf"
+  DRIVER_DEFAULT = "#{ETC_LOCATION}/jclouds_driver.default"
+
+  PUBLIC_TAG = "JCLOUDS"
+
+  # Jclouds commands constants
+  PUBLIC = {
+    :run => {
+      :cmd => :create_virtual_machine,
+      :args => {
+        "INSTANCE_TYPE" => {
+          :opt => 'vm_size'
+        },
+        "IMAGE" => {
+          :opt => 'image'
+        },
+        "VM_USER" => {
+          :opt => 'vm_user'
+        },
+        "VM_PASSWORD" => {
+          :opt => 'password'
+        },
+        "LOCATION" => {
+          :opt => 'location'
+        },
+        "GROUP" => {
+          :opt => 'affinity_group_name'
+        },
+      },
+    },
+    :shutdown => {
+      :cmd => :shutdown_virtual_machine
+    },
+    :reboot => {
+      :cmd => :restart_virtual_machine
+    },
+    :stop => {
+      :cmd => :shutdown_virtual_machine
+    },
+    :start => {
+      :cmd => :start_virtual_machine
+    },
+    :delete => {
+      :cmd => :delete_virtual_machine
+    }
+  }
+
+   # Jclouds attributes that will be retrieved in a polling action
+   POLL_ATTRS = [
+     :private_ip_address,
+     :ip_address,
+     :instance_type
+    ]
 
   def initialize(host)
     super(host)
