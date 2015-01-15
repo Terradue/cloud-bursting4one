@@ -25,64 +25,77 @@ class JcloudsDriver < BurstingDriver
   PUBLIC_TAG = "JCLOUDS"
 
   # Jclouds commands constants
-  PUBLIC = {
+  PUBLIC_CMD = {
     :run => {
-      :cmd => :create_virtual_machine,
+      :cmd => :add,
       :args => {
-        "INSTANCE_TYPE" => {
-          :opt => 'vm_size'
+        "HARDWAREID" => {
+          :opt => 'hardwareid'
         },
-        "IMAGE" => {
-          :opt => 'image'
+        "IMAGEID" => {
+          :opt => 'imageid'
         },
-        "VM_USER" => {
-          :opt => 'vm_user'
-        },
-        "VM_PASSWORD" => {
-          :opt => 'password'
-        },
-        "LOCATION" => {
-          :opt => 'location'
+        "LOCATIONID" => {
+          :opt => 'locationid'
         },
         "GROUP" => {
-          :opt => 'affinity_group_name'
+          :opt => 'group'
         },
       },
     },
     :shutdown => {
-      :cmd => :shutdown_virtual_machine
+      :cmd => :destroy
     },
     :reboot => {
-      :cmd => :restart_virtual_machine
+      :cmd => :reboot
     },
     :stop => {
-      :cmd => :shutdown_virtual_machine
+      :cmd => :destroy
     },
     :start => {
-      :cmd => :start_virtual_machine
+      :cmd => :start
     },
     :delete => {
-      :cmd => :delete_virtual_machine
+      :cmd => :destroy
     }
   }
 
-   # Jclouds attributes that will be retrieved in a polling action
-   POLL_ATTRS = [
-     :private_ip_address,
-     :ip_address,
-     :instance_type
-    ]
+  # Jclouds attributes that will be retrieved in a polling action
+  POLL_ATTRS = [
+    :private_ip_address,
+    :ip_address
+  ]
+
+  JCLOUDS_CMD = "java -jar /usr/lib/jclouds-cli/jclouds-cli.jar"
 
   def initialize(host)
     super(host)
 
     @instance_types = @public_cloud_conf['instance_types']
-
+    
     regions = @public_cloud_conf['regions']
     @region = regions[host] || regions["default"]
   end
 
-  def deploy(id,host,xml_text)
-    super
+  def create_instance(opts)
+    provider   = "aws-ec2"
+    identity   = @region['access_key_id']
+    credential = @region['secret_access_key']
+    group      = opts['group']
+    command    = "listimages"
+
+    rc, info = do_command("#{JCLOUDS_CMD} #{provider} #{identity} #{credential} #{group} #{command}")
   end
+
+  def do_command(cmd)
+    rc = LocalCommand.run(cmd)
+
+    if rc.code == 0
+      return [true, rc.stdout]
+    else
+      STDERR.puts("Error executing: #{cmd} err: #{rc.stderr} out: #{rc.stdout}")
+      return [false, rc.code]
+    end
+  end
+
 end

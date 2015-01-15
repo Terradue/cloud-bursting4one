@@ -49,10 +49,10 @@ class BurstingDriver
   PUBLIC_TAG = ""
 
   # Public provider commands costants
-  PUBLIC = {}
+  PUBLIC_CMD = nil
 
   # Public provider attributes that will be retrieved in a polling action
-  POLL_ATTRS = []
+  POLL_ATTRS = nil
 
   def self.create(type,host)
     case type
@@ -75,13 +75,16 @@ class BurstingDriver
 
     info = get_deployment_info(host, xml_text)
 
+    # TODO Make an abstraction of the validation phase
     if !value(info, 'IMAGEID')
       STDERR.puts("Cannot find IMAGEID in deployment file")
       exit(-1)
     end
 
+    opts = generate_options(:run, info, {})
+
     begin
-      #instance = AWS.ec2.instances.create(opts)
+      instance = create_instance(opts)
     rescue => e
       STDERR.puts(e.message)
       exit(-1)
@@ -165,7 +168,7 @@ private
     public_cloud
   end 
 
-  # Retrive the vm information from the instance
+  # Retrieve the VM information from the instance
   def parse_poll(instance)
   end
 
@@ -175,13 +178,36 @@ private
   def create_params(id,csn,info)
   end
 
-  def create_options(id,csn,info)
+  # Generate the options for the given command from the xml provided in the
+  #   template. The available options for each command are defined in the
+  #   PUBLIC_CLOUD constant
+  def generate_options(action, xml, extra_params={})
+    opts = extra_params || {}
+
+    if self.class::PUBLIC_CMD[action][:args]
+      self.class::PUBLIC_CMD[action][:args].each {|k,v|
+        str = value(xml, k, &v[:proc])
+        if str
+          tmp = opts
+          last_key = nil
+          v[:opt].split('/').each { |k|
+            tmp = tmp[last_key] if last_key
+            tmp[k] = {}
+            last_key = k
+          }
+          tmp[last_key] = str
+        end
+      }
+    end
+
+    opts
   end
 
   # Execute a command
   # +deploy_id+: String, VM id 
   # +action+: Symbol, one of the keys of the hash constant (i.e :run)
   def action(deploy_id, action)
+    raise "You should implement this method."
   end
 
   # Returns the value of the xml specified by the name or the default
@@ -221,7 +247,7 @@ private
 
       return if !public_cloud
 
-      PUBLIC.each {|action, hash|
+      PUBLIC_CMD.each {|action, hash|
         if hash[:args]
           hash[:args].each { |key, value|
             @defaults[key] = value_from_xml(public_cloud, key)
@@ -240,5 +266,10 @@ private
   # Retrive the instance from the Public Provider. If OpenNebula asks for it, then the 
   # vm_name must comply with the notation name_csn
   def get_instance(vm_name); end
+  
+  # Retrive the instance from the Public Provider. If OpenNebula asks for it, then the 
+  # vm_name must comply with the notation name_csn
+  def create_instance(opts)
+    raise "You should implement this method."
+  end
 end
-
