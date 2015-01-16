@@ -43,6 +43,13 @@ class JcloudsDriver < BurstingDriver
         },
       },
     },
+    :get => {
+      :cmd => :get
+      :args => {
+        "NODEID" => {
+          :opt => 'nodeid'
+        },
+    },
     :shutdown => {
       :cmd => :destroy
     },
@@ -85,7 +92,27 @@ class JcloudsDriver < BurstingDriver
     command    = "listimages"
 
     rc, info = do_command("#{JCLOUDS_CMD} #{provider} #{identity} #{credential} #{group} #{command}")
+
+    # TODO Placeholder
+    puts "instanceid"
   end
+
+  # Retrive the instance from EC2
+  def get_instance(id)
+    begin
+      rc, info = do_command("#{JCLOUDS_CMD} #{provider} #{identity} #{credential} #{group} #{command} #{id}")
+      if rc == true
+        return info
+      else
+        raise "Instance #{id} does not exist"
+      end
+    rescue => e
+      STDERR.puts e.message
+        exit(-1)
+    end
+  end
+
+private
 
   def do_command(cmd)
     rc = LocalCommand.run(cmd)
