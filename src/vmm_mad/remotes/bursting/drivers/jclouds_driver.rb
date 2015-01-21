@@ -44,18 +44,20 @@ class JcloudsDriver < BurstingDriver
       },
     },
     :get => {
-      :cmd => :listnode
+      :cmd => :listnode,
       :args => {
         "ID" => {
           :opt => '--id'
         },
+      },
     },
     :shutdown => {
-      :cmd => :destroy
+      :cmd => :destroy,
       :args => {
         "ID" => {
           :opt => '--id'
         },
+      },
     },
     :reboot => {
       :cmd => :reboot
@@ -90,7 +92,7 @@ class JcloudsDriver < BurstingDriver
 
   def create_instance(opts)
     
-    puts opts
+    .each {|k,v|
     
     provider   = "aws-ec2"
     identity   = @region['access_key_id']
