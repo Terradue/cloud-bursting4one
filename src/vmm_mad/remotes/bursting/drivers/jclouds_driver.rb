@@ -44,7 +44,7 @@ class JcloudsDriver < BurstingDriver
       },
     },
     :get => {
-      :cmd => :listnode,
+      :cmd => :listnodes,
       :args => {
         "ID" => {
           :opt => '--id'
@@ -82,38 +82,57 @@ class JcloudsDriver < BurstingDriver
   JCLOUDS_CMD = "/usr/lib/jclouds-cli/bin/jclouds-cli"
 
   def initialize(host)
+    
     super(host)
 
     @instance_types = @public_cloud_conf['instance_types']
     
     regions = @public_cloud_conf['regions']
     @region = regions[host] || regions["default"]
+    
+    @args = ""
+    # TODO get provider from public_cloud_conf
+    provider = "aws-ec2"
+    args.concat(" --provider #{provider}")
+    args.concat(" --identity #{@region['access_key_id']}")
+    args.concat(" --credential #{@region['secret_key_id']}")
+    
   end
 
   def create_instance(opts)
     
-    .each {|k,v|
-    
-    provider   = "aws-ec2"
-    identity   = @region['access_key_id']
-    credential = @region['secret_access_key']
-    group      = opts['group']
-    command    = "listimages"
+    command = self.class::PUBLIC_CMD[:run][:cmd]
 
-    rc, info = do_command("#{JCLOUDS_CMD} \
-    #{provider} #{identity} #{credential} #{group} \ 
-    #{command}")
+    opts.each {|k,v|
+      @args.concat(" ")
+      @args.concat("#{k} #{v}")
+    }
+    
+    begin
+      rc, info = do_command("#{JCLOUDS_CMD} #{command} #{@args}")
+      
+      if rc == true
+        return info
+      else
+        raise "Error creating the instance"
+      end
+    rescue => e
+      STDERR.puts e.message
+        exit(-1)
+    end
 
     # TODO Placeholder
+    # parse(info)
     puts "instanceid"
   end
 
-  # Retrive the instance from EC2
+  # Retrieve the instance from the Cloud Provider
   def get_instance(id)
+    
+    command = self.class::PUBLIC_CMD[:get][:cmd]
+    
     begin
-      rc, info = do_command("#{JCLOUDS_CMD} \
-      #{provider} #{identity} #{credential} #{group} \
-      #{command} #{id}")
+      rc, info = do_command("#{JCLOUDS_CMD} #{command} #{@args}")
       
       if rc == true
         return info
