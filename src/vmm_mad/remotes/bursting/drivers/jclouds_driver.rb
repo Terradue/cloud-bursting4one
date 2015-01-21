@@ -30,28 +30,32 @@ class JcloudsDriver < BurstingDriver
       :cmd => :add,
       :args => {
         "HARDWAREID" => {
-          :opt => 'hardwareid'
+          :opt => '--hardwareid'
         },
         "IMAGEID" => {
-          :opt => 'imageid'
+          :opt => '--imageid'
         },
         "LOCATIONID" => {
-          :opt => 'locationid'
+          :opt => '--locationid'
         },
         "GROUP" => {
-          :opt => 'group'
+          :opt => '--group'
         },
       },
     },
     :get => {
-      :cmd => :get
+      :cmd => :listnode
       :args => {
-        "NODEID" => {
-          :opt => 'nodeid'
+        "ID" => {
+          :opt => '--id'
         },
     },
     :shutdown => {
       :cmd => :destroy
+      :args => {
+        "ID" => {
+          :opt => '--id'
+        },
     },
     :reboot => {
       :cmd => :reboot
@@ -73,7 +77,7 @@ class JcloudsDriver < BurstingDriver
     :ip_address
   ]
 
-  JCLOUDS_CMD = "java -jar /usr/lib/jclouds-cli/jclouds-cli.jar"
+  JCLOUDS_CMD = "/usr/lib/jclouds-cli/bin/jclouds-cli"
 
   def initialize(host)
     super(host)
@@ -85,13 +89,18 @@ class JcloudsDriver < BurstingDriver
   end
 
   def create_instance(opts)
+    
+    puts opts
+    
     provider   = "aws-ec2"
     identity   = @region['access_key_id']
     credential = @region['secret_access_key']
     group      = opts['group']
     command    = "listimages"
 
-    rc, info = do_command("#{JCLOUDS_CMD} #{provider} #{identity} #{credential} #{group} #{command}")
+    rc, info = do_command("#{JCLOUDS_CMD} \
+    #{provider} #{identity} #{credential} #{group} \ 
+    #{command}")
 
     # TODO Placeholder
     puts "instanceid"
@@ -100,7 +109,10 @@ class JcloudsDriver < BurstingDriver
   # Retrive the instance from EC2
   def get_instance(id)
     begin
-      rc, info = do_command("#{JCLOUDS_CMD} #{provider} #{identity} #{credential} #{group} #{command} #{id}")
+      rc, info = do_command("#{JCLOUDS_CMD} \
+      #{provider} #{identity} #{credential} #{group} \
+      #{command} #{id}")
+      
       if rc == true
         return info
       else
@@ -111,6 +123,50 @@ class JcloudsDriver < BurstingDriver
         exit(-1)
     end
   end
+  
+  # Retrieve the VM information
+  def parse_poll(instance)
+    info =  "#{POLL_ATTRIBUTE[:usedmemory]}=0 " \
+            "#{POLL_ATTRIBUTE[:usedcpu]}=0 " \
+            "#{POLL_ATTRIBUTE[:nettx]}=0 " \
+            "#{POLL_ATTRIBUTE[:netrx]}=0 "
+
+    state = ""
+    if !instance
+      state = VM_STATE[:deleted]
+    else
+      state = case instance.deployment_status
+      when "Running", "Starting"
+        VM_STATE[:active]
+      when "Suspended", "Stopping", 
+        VM_STATE[:paused]
+      else
+        VM_STATE[:deleted]
+      end
+    end
+    
+    info << "#{POLL_ATTRIBUTE[:state]}=#{state} "
+
+    POLL_ATTRS.map { |key|
+      value = instance.send(key)
+      if !value.nil? && !value.empty?
+        if key.to_s.upcase == "TCP_ENDPOINTS" or
+          key.to_s.upcase == "UDP_ENDPOINTS"
+          value_str = format_endpoints(value)
+        elsif value.kind_of?(Hash)
+          value_str = value.inspect
+        else
+          value_str = value
+        end
+
+        info << "PUBLIC_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
+
+      end
+    }
+
+    info
+  end
+  
 
 private
 

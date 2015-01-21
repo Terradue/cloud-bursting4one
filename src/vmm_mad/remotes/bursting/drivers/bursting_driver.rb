@@ -169,14 +169,7 @@ private
   end 
 
   # Retrieve the VM information from the instance
-  def parse_poll(instance)
-  end
-
-  def format_endpoints(endpoints)
-  end
-
-  def create_params(id,csn,info)
-  end
+  def parse_poll(instance); end
 
   # Generate the options for the given command from the xml provided in the
   #   template. The available options for each command are defined in the
@@ -261,13 +254,11 @@ private
     @public_cloud_conf  = YAML::load(File.read(self.class::DRIVER_CONF))
   end
 
-  def in_silence; end    
-
-  # Retrive the instance from the Public Provider. If OpenNebula asks for it, then the 
+  # Retrieve the instance from the Public Provider. If OpenNebula asks for it, then the 
   # vm_name must comply with the notation name_csn
   def get_instance(vm_name); end
   
-  # Retrive the instance from the Public Provider. If OpenNebula asks for it, then the 
+  # Retrieve the instance from the Public Provider. If OpenNebula asks for it, then the 
   # vm_name must comply with the notation name_csn
   def create_instance(opts)
     raise "You should implement this method."
