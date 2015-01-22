@@ -28,6 +28,7 @@ end
 require 'yaml'
 require 'rubygems'
 require 'uri'
+require 'json'
 
 $: << RUBY_LIB_LOCATION
 
@@ -84,11 +85,13 @@ class BurstingDriver
     opts = generate_options(:run, info, {})
 
     begin
-      instance = create_instance(opts)
+      istance_id = create_instance(opts)
     rescue => e
       STDERR.puts(e.message)
       exit(-1)
     end
+
+    puts instance_id
   end
 
   # Shutdown an instance
@@ -118,8 +121,8 @@ class BurstingDriver
 
   # Get info for an instance
   def poll(id, deploy_id)
-    i = get_instance(deploy_id)
-    puts parse_poll(i)
+    instance = get_instance(deploy_id)
+    puts parse_poll(instance)
   end
 
   # Get the info of all instances. An instance must have
@@ -169,7 +172,9 @@ private
   end 
 
   # Retrieve the VM information from the instance
-  def parse_poll(instance); end
+  def parse_poll(instance)
+    raise "You should implement this method."
+  end
 
   # Generate the options for the given command from the xml provided in the
   #   template. The available options for each command are defined in the
