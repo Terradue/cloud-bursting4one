@@ -135,6 +135,25 @@ class JcloudsDriver < BurstingDriver
     return info
   end
   
+  # Destroy the instance from the Cloud Provider
+  def destroy_instance(id)
+    
+    command = self.class::PUBLIC_CMD[:delete][:cmd]
+    
+    @args.concat(" --id #{id}")
+
+    begin
+      rc, info = do_command("#{JCLOUDS_CMD} #{command} #{@args}")
+      
+      raise "Instance #{id} does not exist" if !rc
+    rescue => e
+      STDERR.puts e.message
+        exit(-1)
+    end
+
+    return info
+  end
+  
   # Retrieve the VM information
   def parse_poll(instance_info)
     info =  "#{POLL_ATTRIBUTE[:usedmemory]}=0 " \
@@ -177,8 +196,7 @@ class JcloudsDriver < BurstingDriver
     return info
 
   end
-  
-
+ 
 private
 
   def do_command(cmd)

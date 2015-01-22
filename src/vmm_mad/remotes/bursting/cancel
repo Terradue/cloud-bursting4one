@@ -18,12 +18,11 @@
 
 $: << File.dirname(__FILE__)
 
-require 'bursting_driver'
+require 'bursting'
 
 deploy_id = ARGV[0]
 host      = ARGV[1]
 
-drv = BurstingDriver.new(host)
+drv = BurstingDriver.create(:jclouds,host)
 
 drv.cancel(deploy_id)
-

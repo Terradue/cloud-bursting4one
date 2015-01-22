@@ -24,10 +24,6 @@ dfile = ARGV[0]
 host  = ARGV[1]
 id    = ARGV[2]
 
-host = "ec2-ows10-sbas"
-id = "dummy"
-dfile = "/tmp/template.xml"
-
 drv = BurstingDriver.create(:jclouds,host)
 
 text=File.read(dfile)

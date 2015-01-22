@@ -18,7 +18,7 @@
 
 $: << File.dirname(__FILE__)
 
-require 'bursting_driver'
+require 'bursting'
 
 deploy_id = ARGV[0]
 host      = ARGV[1]

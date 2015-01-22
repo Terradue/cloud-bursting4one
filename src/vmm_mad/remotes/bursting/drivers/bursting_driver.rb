@@ -96,7 +96,7 @@ class BurstingDriver
 
   # Shutdown an instance
   def shutdown(deploy_id)
-    action(deploy_id, :shutdown)
+    destroy_instance(deploy_id)
   end
 
   # Reboot an instance
@@ -106,7 +106,7 @@ class BurstingDriver
 
   # Cancel an instance
   def cancel(deploy_id)
-    action(deploy_id, :delete)
+    destroy_instance(deploy_id)
   end
 
   # Stop an instance
@@ -204,9 +204,7 @@ private
   # Execute a command
   # +deploy_id+: String, VM id 
   # +action+: Symbol, one of the keys of the hash constant (i.e :run)
-  def action(deploy_id, action)
-    raise "You should implement this method."
-  end
+  def action(deploy_id, action); end
 
   # Returns the value of the xml specified by the name or the default
   # one if it does not exist
@@ -261,11 +259,19 @@ private
 
   # Retrieve the instance from the Public Provider. If OpenNebula asks for it, then the 
   # vm_name must comply with the notation name_csn
-  def get_instance(vm_name); end
+  def get_instance(deploy_id)
+    raise "You should implement this method."
+  end
   
   # Retrieve the instance from the Public Provider. If OpenNebula asks for it, then the 
   # vm_name must comply with the notation name_csn
   def create_instance(opts)
+    raise "You should implement this method."
+  end
+
+  # Retrieve the instance from the Public Provider. If OpenNebula asks for it, then the 
+  # vm_name must comply with the notation name_csn
+  def destroy_instance(deploy_id)
     raise "You should implement this method."
   end
 end
