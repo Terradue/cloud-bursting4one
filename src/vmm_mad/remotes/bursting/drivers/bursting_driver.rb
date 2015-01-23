@@ -85,7 +85,7 @@ class BurstingDriver
     opts = generate_options(:run, info, {})
 
     begin
-      istance_id = create_instance(opts)
+      instance_id = create_instance(opts)
     rescue => e
       STDERR.puts(e.message)
       exit(-1)

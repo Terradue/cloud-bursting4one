@@ -82,7 +82,6 @@
 						</mapping>
 						<mapping>
 							<directory>/etc/one/</directory>
-							<filemode>640</filemode>
 							<username>root</username>
 							<sources>
 								<source>
