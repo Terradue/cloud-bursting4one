@@ -65,7 +65,7 @@
 					<description>Cloud bursting driver for OpenNebula</description>
 					<mappings>
 						<mapping>
-							<directory>/var/lib/one/remotes/vmm/</directory>
+							<directory>/var/lib/one/remotes/vmm/bursting</directory>
 							<sources>
 								<source>
 									<location>${basedir}/src/vmm_mad/remotes/bursting</location>
@@ -73,7 +73,7 @@
 							</sources>
 						</mapping>
 						<mapping>
-							<directory>/var/lib/one/remotes/im/</directory>
+							<directory>/var/lib/one/remotes/im/bursting.d</directory>
 							<sources>
 								<source>
 									<location>${basedir}/src/im_mad/remotes/bursting.d</location>
@@ -84,7 +84,7 @@
 							<directory>/etc/one/</directory>
 							<sources>
 								<source>
-									<location>${basedir}/src/etc/</location>
+									<location>${basedir}/src/etc</location>
 								</source>
 							</sources>
 						</mapping>
