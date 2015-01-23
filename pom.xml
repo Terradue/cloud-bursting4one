@@ -72,6 +72,14 @@
 								</source>
 							</sources>
 						</mapping>
+						<mapping>
+							<directory>/etc/one/</directory>
+							<sources>
+								<source>
+									<location>${basedir}/src/etc/jclouds_driver.conf</location>
+								</source>
+							</sources>
+						</mapping>
 					</mappings>
 
 					<provides>
