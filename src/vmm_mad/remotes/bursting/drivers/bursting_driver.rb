@@ -127,7 +127,31 @@ class BurstingDriver
 
   # Get the info of all instances. An instance must have
   # a name compliant with the "one-#####_csn" format, where ##### are intengers
-  def monitor_all_vms; end
+  def monitor_all_vms
+
+    totalmemory = 0
+    totalcpu = 0
+    @host['capacity'].each { |name, size|
+      cpu, mem = instance_type_capacity(name)
+
+      totalmemory += mem * size.to_i
+      totalcpu    += cpu * size.to_i
+    }
+
+    host_info =  "HYPERVISOR=bursting\n"
+    host_info << "PUBLIC_CLOUD=YES\n"
+    host_info << "PRIORITY=-1\n"
+    host_info << "TOTALMEMORY=#{totalmemory.round}\n"
+    host_info << "TOTALCPU=#{totalcpu}\n"
+    host_info << "CPUSPEED=1000\n"
+    host_info << "HOSTNAME=\"#{@host}\"\n"
+
+    vms_info = "VM_POLL=NO\n"
+
+    puts host_info
+    puts vms_info
+
+  end
 
 private
 

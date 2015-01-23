@@ -73,10 +73,18 @@
 							</sources>
 						</mapping>
 						<mapping>
+							<directory>/var/lib/one/remotes/im/</directory>
+							<sources>
+								<source>
+									<location>${basedir}/src/im_mad/remotes/bursting.d</location>
+								</source>
+							</sources>
+						</mapping>
+						<mapping>
 							<directory>/etc/one/</directory>
 							<sources>
 								<source>
-									<location>${basedir}/src/etc/jclouds_driver.conf</location>
+									<location>${basedir}/src/etc/</location>
 								</source>
 							</sources>
 						</mapping>
