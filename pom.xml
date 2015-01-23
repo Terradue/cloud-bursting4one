@@ -57,10 +57,10 @@
 					<group>infra</group>
 					<packager>Terradue</packager>
 					<name>${project.artifactId}</name>
-					<defaultDirmode>775</defaultDirmode>
-					<defaultFilemode>664</defaultFilemode>
-					<defaultUsername>root</defaultUsername>
-					<defaultGroupname>root</defaultGroupname>
+					<defaultDirmode>750</defaultDirmode>
+					<defaultFilemode>755</defaultFilemode>
+					<defaultUsername>oneadmin</defaultUsername>
+					<defaultGroupname>oneadmin</defaultGroupname>
 					<autoRequires>true</autoRequires>
 					<description>Cloud bursting driver for OpenNebula</description>
 					<mappings>
@@ -82,6 +82,8 @@
 						</mapping>
 						<mapping>
 							<directory>/etc/one/</directory>
+							<filemode>640</filemode>
+							<username>root</username>
 							<sources>
 								<source>
 									<location>${basedir}/src/etc</location>
