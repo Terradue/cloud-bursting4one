@@ -153,6 +153,46 @@ class JcloudsDriver < BurstingDriver
 
     return info
   end
+
+  def monitor_all_vms
+
+    totalmemory = 0
+    totalcpu = 0
+    @host['capacity'].each { |name, size|
+      cpu, mem = instance_type_capacity(name)
+
+      totalmemory += mem * size.to_i
+      totalcpu    += cpu * size.to_i
+    }
+
+    host_info =  "HYPERVISOR=bursting\n"
+    host_info << "PUBLIC_CLOUD=YES\n"
+    host_info << "PRIORITY=-1\n"
+    host_info << "TOTALMEMORY=#{totalmemory.round}\n"
+    host_info << "TOTALCPU=#{totalcpu}\n"
+    host_info << "CPUSPEED=1000\n"
+    host_info << "HOSTNAME=\"#{@host}\"\n"
+
+    vms_info = "VM_POLL=YES\n"
+
+    one_auth = File.read(DEFAULT_AUTH_FILE)
+
+    rpc_client = Client.new(one_auth, DEFAULT_ENDPOINT)
+
+    host = Host.new(Host.build_xml(76),rpc_client)
+
+    xmldoc = Document.new(host.monitoring_xml)
+  
+    XPath.each(xmldoc, "//HOST[last()]/VMS/ID") { |e| 
+      open('/tmp/bursting.out2', 'w') { |f|
+        f.puts e.text
+      }
+    }
+
+    puts host_info
+    puts vms_info
+
+  end
   
   # Retrieve the VM information
   def parse_poll(instance_info)
