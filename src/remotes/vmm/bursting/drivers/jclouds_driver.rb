@@ -179,6 +179,8 @@ class JcloudsDriver < BurstingDriver
 
     vms_info = "VM_POLL=YES\n"
 
+    # In tha case of the jclouds driver is not possible to assign a name
+    # to the VM or assign a tag, as in the case of EC2 client
     one_auth = File.read(DEFAULT_AUTH_FILE)
 
     rpc_client = Client.new(one_auth, DEFAULT_ENDPOINT)
@@ -188,9 +190,6 @@ class JcloudsDriver < BurstingDriver
     xmldoc = Document.new(host.monitoring_xml)
   
     XPath.each(xmldoc, "//HOST[last()]/VMS/ID") { |e| 
-      open('/tmp/bursting.out2', 'w') { |f|
-        f.puts e.text
-      }
     }
 
     puts host_info
