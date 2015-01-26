@@ -175,28 +175,63 @@ class JcloudsDriver < BurstingDriver
     host_info << "TOTALMEMORY=#{totalmemory.round}\n"
     host_info << "TOTALCPU=#{totalcpu}\n"
     host_info << "CPUSPEED=1000\n"
+    # TODO fix the @host value
     host_info << "HOSTNAME=\"#{@host}\"\n"
 
     vms_info = "VM_POLL=YES\n"
 
-    # In tha case of the jclouds driver is not possible to assign a name
-    # to the VM or assign a tag, as in the case of EC2 client
+    # In the case of the jclouds driver is not possible to assign a name
+    # or a TAG to the VM, as in the case of EC2 client. In this way a VM
+    # started from the OpenNebula cannot be discriminated from one started
+    # from another client. The solution here is to perform a polling call for
+    # each VM.
+    # The OpenNebula's Ruby API is used To get all the instances associated
+    # with the 'host' specified.
     one_auth = File.read(DEFAULT_AUTH_FILE)
-
+    # TODO Check if it works with the default parameters 
     rpc_client = Client.new(one_auth, DEFAULT_ENDPOINT)
 
+    # TODO retrieve the ID from the hostname
+    # host_pool = OpenNebula::HostPool.new(::OpenNebula::Client.new())
+    # host = host_pool.select {|host_element| host_element.name==hostname }
+    # return host.first.id
     host = Host.new(Host.build_xml(76),rpc_client)
 
     xmldoc = Document.new(host.monitoring_xml)
-  
-    XPath.each(xmldoc, "//HOST[last()]/VMS/ID") { |e| 
+
+    usedcpu    = 0
+    usedmemory = 0
+
+    XPath.each(xmldoc, "//HOST[last()]/VMS/ID") { |e|
+      id = e.text
+      # get VM deploy_id and instance_type from opennebula
+      # deploy_id =
+      # instance_type =
+      instance = get_instance(deploy_id)
+      poll_data = parse_poll(instance)
+ 
+      vms_info << "VM=[\n"
+                vms_info << "  ID=#{id || -1},\n"
+                vms_info << "  DEPLOY_ID=#{deploy_id},\n"
+                vms_info << "  POLL=\"#{poll_data}\" ]\n"
+
+      cpu, mem = instance_type_capacity(instance_type)
+      usedcpu += cpu
+      usedmemory += mem
+    
     }
+
+    host_info << "USEDMEMORY=#{usedmemory.round}\n"
+    host_info << "USEDCPU=#{usedcpu.round}\n"
+    host_info << "FREEMEMORY=#{(totalmemory - usedmemory).round}\n"
+    host_info << "FREECPU=#{(totalcpu - usedcpu).round}\n"
 
     puts host_info
     puts vms_info
 
   end
-  
+ 
+
   # Retrieve the VM information
   def parse_poll(instance_info)
     info =  "#{POLL_ATTRIBUTE[:usedmemory]}=0 " \
