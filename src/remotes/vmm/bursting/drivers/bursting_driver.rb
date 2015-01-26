@@ -55,9 +55,13 @@ class BurstingDriver
   # Public provider attributes that will be retrieved in a polling action
   POLL_ATTRS = nil
 
+  DRIVERS = {
+    :jclouds => 'jclouds'
+  }
+
   def self.create(type,host)
     case type
-    when :jclouds
+    when DRIVERS[:jclouds]
       JcloudsDriver.new(host)
     else
       raise "Bad bursting driver type: #{type}"

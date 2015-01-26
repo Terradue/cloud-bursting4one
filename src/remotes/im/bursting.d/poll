@@ -21,7 +21,8 @@ $: << File.join(File.dirname(__FILE__), '../../vmm/bursting')
 require 'bursting'
 
 host = ARGV[-1]
+provider = ARGV[0]
 
-drv = BurstingDriver.create(:jclouds,host)
+drv = BurstingDriver.create(provider,host)
 
 drv.monitor_all_vms
