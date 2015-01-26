@@ -20,13 +20,14 @@ $: << File.dirname(__FILE__)
 
 require 'bursting'
 
-dfile = ARGV[0]
-host  = ARGV[1]
-id    = ARGV[2]
+dfile    = ARGV[0]
+host     = ARGV[1]
+provider = ARGV[2]
+id       = ARGV[3]
 
-drv = BurstingDriver.create(:jclouds,host)
+text = File.read(dfile)
 
-text=File.read(dfile)
+drv = BurstingDriver.create(provider,host)
 
 puts drv.deploy(id, host, text)
 
