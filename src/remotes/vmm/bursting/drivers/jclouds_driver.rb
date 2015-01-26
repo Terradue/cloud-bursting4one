@@ -16,6 +16,10 @@
 # -------------------------------------------------------------------------- #
 
 require 'drivers/bursting_driver'
+require 'opennebula'
+
+include OpenNebula
+include REXML
 
 class JcloudsDriver < BurstingDriver
 

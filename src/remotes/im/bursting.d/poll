@@ -23,6 +23,8 @@ require 'bursting'
 host = ARGV[-1]
 provider = ARGV[0]
 
+#host_id= ARGV[4]
+
 drv = BurstingDriver.create(provider,host)
 
 drv.monitor_all_vms
