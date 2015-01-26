@@ -80,6 +80,7 @@ class JcloudsDriver < BurstingDriver
     :privateAddresses
   ]
 
+  #TODO use '/usr/bin/jclouds-cli' as PATH
   JCLOUDS_CMD = "/usr/lib/jclouds-cli/bin/jclouds-cli"
 
   def initialize(host)
@@ -230,7 +231,6 @@ class JcloudsDriver < BurstingDriver
     puts vms_info
 
   end
- 
 
   # Retrieve the VM information
   def parse_poll(instance_info)
