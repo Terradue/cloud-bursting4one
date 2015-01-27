@@ -214,7 +214,7 @@ class JcloudsDriver < BurstingDriver
         poll_data = parse_poll(instance)
  
         vms_info << "VM=[\n"
-                  vms_info << "  ID=#{id || -1},\n"
+                  vms_info << "  ID=#{vm_id || -1},\n"
                   vms_info << "  DEPLOY_ID=#{deploy_id},\n"
                   vms_info << "  POLL=\"#{poll_data}\" ]\n"
       end
