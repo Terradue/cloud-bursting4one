@@ -172,7 +172,7 @@ class JcloudsDriver < BurstingDriver
       totalcpu    += cpu * size.to_i
     }
 
-    host_info =  "HYPERVISOR=bursting\n"
+    host_info =  "HYPERVISOR=jclouds\n"
     host_info << "PUBLIC_CLOUD=YES\n"
     host_info << "PRIORITY=-1\n"
     host_info << "TOTALMEMORY=#{totalmemory.round}\n"
