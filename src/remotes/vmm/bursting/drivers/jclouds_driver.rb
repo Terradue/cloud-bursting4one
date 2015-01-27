@@ -26,7 +26,7 @@ class JcloudsDriver < BurstingDriver
   DRIVER_CONF    = "#{ETC_LOCATION}/jclouds_driver.conf"
   DRIVER_DEFAULT = "#{ETC_LOCATION}/jclouds_driver.default"
 
-  PUBLIC_TAG = "JCLOUDS"
+  PUBLIC_TAG = "PUBLIC_CLOUD"
 
   # Jclouds commands constants
   PUBLIC_CMD = {
