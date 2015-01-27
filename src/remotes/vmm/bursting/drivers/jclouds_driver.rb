@@ -187,25 +187,27 @@ class JcloudsDriver < BurstingDriver
     # started from the OpenNebula cannot be discriminated from one started
     # from another client. The solution here is to perform a polling call for
     # each VM.
-    # The OpenNebula's Ruby API is used To get all the instances associated
+    # The OpenNebula's RPC API is used To get all the instances associated
     # with the 'host' specified.
 
-    host = Host.new(Host.build_xml(host_id),::OpenNebula::Client.new())
-    xml_host = Document.new(host.monitoring_xml)
+    client = ::OpenNebula::Client.new()
+
+    xml = client.call("host.info",host_id.to_i)
+    xml_host = REXML::Document.new(xml) if xml
 
     usedcpu    = 0
     usedmemory = 0
 
-    XPath.each(xml_host, "//HOST[last()]/VMS/ID") { |e1|
-      id = e1.text
-      vm = VirtualMachine.new(VirtualMachine.build_xml(id),::OpenNebula::Client.new())
+    XPath.each(xml_host, "/HOST/VMS/ID") { |e1|
+      vm_id = e1.text
 
-      xml_vm = Document.new(vm.monitoring_xml)
+      xml = client.call("vm.info", vm_id.to_i)
+      xml_vm = REXML::Document.new(xml) if xml
 
       deploy_id = ""
       poll_data = ""
       
-      XPath.each(xml_vm, "//VM[last()]/DEPLOY_ID") { |e2| deploy_id = e2.text }
+      XPath.each(xml_vm, "/VM/DEPLOY_ID") { |e2| deploy_id = e2.text }
 
       if !deploy_id.empty?
         instance = get_instance(deploy_id)
