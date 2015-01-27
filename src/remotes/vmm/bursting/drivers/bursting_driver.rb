@@ -25,9 +25,6 @@ else
     ETC_LOCATION      = ONE_LOCATION + "/etc/" if !defined?(ETC_LOCATION)
 end
 
-DEFAULT_AUTH_FILE = ENV["HOME"]+"/.one/one_auth"
-DEFAULT_ENDPOINT  = "http://localhost:2633/RPC2"
-
 require 'yaml'
 require 'rubygems'
 require 'uri'
@@ -133,7 +130,7 @@ class BurstingDriver
   end
 
   # Get the info of all instances.
-  def monitor_all_vms; end
+  def monitor_all_vms(host_id); end
 
 private
 

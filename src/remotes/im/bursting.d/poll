@@ -20,11 +20,10 @@ $: << File.join(File.dirname(__FILE__), '../../vmm/bursting')
 
 require 'bursting'
 
-host = ARGV[-1]
+host     = ARGV[-1]
 provider = ARGV[0]
-
-#host_id= ARGV[4]
+host_id  = ARGV[4]
 
 drv = BurstingDriver.create(provider,host)
 
-drv.monitor_all_vms
+drv.monitor_all_vms(host_id)

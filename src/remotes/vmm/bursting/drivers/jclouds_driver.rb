@@ -96,6 +96,8 @@ class JcloudsDriver < BurstingDriver
     @args.concat(" --provider #{@host['provider']}")
     @args.concat(" --identity #{@host['identity']}")
     @args.concat(" --credential #{@host['credential']}")
+
+    @hostname = host
     
   end
 
@@ -159,7 +161,7 @@ class JcloudsDriver < BurstingDriver
     return info
   end
 
-  def monitor_all_vms
+  def monitor_all_vms(host_id)
 
     totalmemory = 0
     totalcpu = 0
@@ -176,8 +178,7 @@ class JcloudsDriver < BurstingDriver
     host_info << "TOTALMEMORY=#{totalmemory.round}\n"
     host_info << "TOTALCPU=#{totalcpu}\n"
     host_info << "CPUSPEED=1000\n"
-    # TODO fix the @host value
-    host_info << "HOSTNAME=\"#{@host}\"\n"
+    host_info << "HOSTNAME=\"#{@hostname}\"\n"
 
     vms_info = "VM_POLL=YES\n"
 
@@ -188,26 +189,24 @@ class JcloudsDriver < BurstingDriver
     # each VM.
     # The OpenNebula's Ruby API is used To get all the instances associated
     # with the 'host' specified.
-    one_auth = File.read(DEFAULT_AUTH_FILE)
-    # TODO Check if it works with the default parameters 
-    rpc_client = Client.new(one_auth, DEFAULT_ENDPOINT)
 
-    # TODO retrieve the ID from the hostname
-    # host_pool = OpenNebula::HostPool.new(::OpenNebula::Client.new())
-    # host = host_pool.select {|host_element| host_element.name==hostname }
-    # return host.first.id
-    host = Host.new(Host.build_xml(76),rpc_client)
-
-    xmldoc = Document.new(host.monitoring_xml)
+    host = Host.new(Host.build_xml(host_id),::OpenNebula::Client.new())
+    xml_host = Document.new(host.monitoring_xml)
 
     usedcpu    = 0
     usedmemory = 0
 
-    XPath.each(xmldoc, "//HOST[last()]/VMS/ID") { |e|
-      id = e.text
+    XPath.each(xml_host, "//HOST[last()]/VMS/ID") { |e1|
+      id = e1.text
       # get VM deploy_id and instance_type from opennebula
       # deploy_id =
       # instance_type =
+      vm = VirtualMachine.new(VirtualMachine.build_xml(id),::OpenNebula::Client.new())
+
+      xml_vm = Document.new(vm.monitoring_xml)
+      
+      XPath.each(xml_vm, "//VM[last()]/DEPLOY_ID") { |e2| deploy_id = e2.text }
+      
       instance = get_instance(deploy_id)
       poll_data = parse_poll(instance)
  
@@ -215,17 +214,7 @@ class JcloudsDriver < BurstingDriver
                 vms_info << "  ID=#{id || -1},\n"
                 vms_info << "  DEPLOY_ID=#{deploy_id},\n"
                 vms_info << "  POLL=\"#{poll_data}\" ]\n"
-
-      cpu, mem = instance_type_capacity(instance_type)
-      usedcpu += cpu
-      usedmemory += mem
-    
     }
-
-    host_info << "USEDMEMORY=#{usedmemory.round}\n"
-    host_info << "USEDCPU=#{usedcpu.round}\n"
-    host_info << "FREEMEMORY=#{(totalmemory - usedmemory).round}\n"
-    host_info << "FREECPU=#{(totalcpu - usedcpu).round}\n"
 
     puts host_info
     puts vms_info
@@ -266,7 +255,7 @@ class JcloudsDriver < BurstingDriver
           value_str = value
         end
 
-        info << "PUBLIC_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
+        info << "JCLOUDS_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
 
       end
     }
