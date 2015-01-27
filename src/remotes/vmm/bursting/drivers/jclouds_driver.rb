@@ -198,22 +198,25 @@ class JcloudsDriver < BurstingDriver
 
     XPath.each(xml_host, "//HOST[last()]/VMS/ID") { |e1|
       id = e1.text
-      # get VM deploy_id and instance_type from opennebula
-      # deploy_id =
-      # instance_type =
       vm = VirtualMachine.new(VirtualMachine.build_xml(id),::OpenNebula::Client.new())
 
       xml_vm = Document.new(vm.monitoring_xml)
+
+      deploy_id = ""
+      poll_data = ""
       
       XPath.each(xml_vm, "//VM[last()]/DEPLOY_ID") { |e2| deploy_id = e2.text }
-      
-      instance = get_instance(deploy_id)
-      poll_data = parse_poll(instance)
+
+      if !deploy_id.empty?
+        instance = get_instance(deploy_id)
+        poll_data = parse_poll(instance)
  
-      vms_info << "VM=[\n"
-                vms_info << "  ID=#{id || -1},\n"
-                vms_info << "  DEPLOY_ID=#{deploy_id},\n"
-                vms_info << "  POLL=\"#{poll_data}\" ]\n"
+        vms_info << "VM=[\n"
+                  vms_info << "  ID=#{id || -1},\n"
+                  vms_info << "  DEPLOY_ID=#{deploy_id},\n"
+                  vms_info << "  POLL=\"#{poll_data}\" ]\n"
+      end
+
     }
 
     puts host_info
