@@ -205,14 +205,16 @@ class JcloudsDriver < BurstingDriver
       
       XPath.each(xml_vm, "/VM/DEPLOY_ID") { |e2| deploy_id = e2.text }
 
-      if !deploy_id.empty?
-        instance = get_instance(deploy_id)
-        poll_data = parse_poll(instance)
+      if !deploy_id.nil?
+	if !deploy_id.empty?
+          instance = get_instance(deploy_id)
+          poll_data = parse_poll(instance)
  
-        vms_info << "VM=[\n"
-                  vms_info << "  ID=#{vm_id || -1},\n"
-                  vms_info << "  DEPLOY_ID=#{deploy_id},\n"
-                  vms_info << "  POLL=\"#{poll_data}\" ]\n"
+          vms_info << "VM=[\n"
+                    vms_info << "  ID=#{vm_id || -1},\n"
+                    vms_info << "  DEPLOY_ID=#{deploy_id},\n"
+                    vms_info << "  POLL=\"#{poll_data}\" ]\n"
+        end
       end
 
     }
