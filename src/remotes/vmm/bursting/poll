@@ -18,19 +18,28 @@
 
 $: << File.dirname(__FILE__)
 
+require 'opennebula'
 require 'bursting'
+
+include OpenNebula
 
 deploy_id = ARGV[0]
 host      = ARGV[1]
 id        = ARGV[2]
-provider  = ARGV[3]
 
-f = File.open("/tmp/poll", 'w')
+type = ""
 
-ARGV.each { |e| f.write("ARGV:#{e}\n")}
+# Determining the bursting 'type', currently with a XML-RPC call (it is preferred
+# through the ARGV arguments)
+client = Client.new()
 
-f.close
+xml = client.call("vm.info", id.to_i)
+xml_vm = REXML::Document.new(xml) if xml
 
-drv = BurstingDriver.create(provider,host)
+REXML::XPath.each(xml_vm, "//PUBLIC_CLOUD/TYPE") { |e| type = e.text  }
+
+raise "Provider type is not defined/determined" if !type.empty?
+
+drv = BurstingDriver.create(type,host)
 
 drv.poll(id, deploy_id)

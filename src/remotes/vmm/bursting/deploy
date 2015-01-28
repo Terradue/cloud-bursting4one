@@ -20,14 +20,14 @@ $: << File.dirname(__FILE__)
 
 require 'bursting'
 
-dfile    = ARGV[0]
-host     = ARGV[1]
-provider = ARGV[2]
-id       = ARGV[3]
+dfile = ARGV[0]
+host  = ARGV[1]
+type  = ARGV[2]
+id    = ARGV[3]
 
 text = File.read(dfile)
 
-drv = BurstingDriver.create(provider,host)
+drv = BurstingDriver.create(type,host)
 
 puts drv.deploy(id, host, text)
 
