@@ -50,7 +50,7 @@ class BurstingDriver
   DRIVER_CONF    = ""
   DRIVER_DEFAULT = ""
 
-  PUBLIC_TAG = ""
+  PUBLIC_TAG = "PUBLIC_CLOUD"
 
   # Public provider commands costants
   PUBLIC_CMD = nil
@@ -193,6 +193,12 @@ private
 
     public_cloud
   end 
+
+  def get_context_info(xml_text)
+    xml = REXML::Document.new xml_text
+
+    context = xml.root.get_elements("//CONTEXT")
+  end
 
   # Retrieve the VM information from the instance
   def parse_poll(instance)
