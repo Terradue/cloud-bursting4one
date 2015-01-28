@@ -80,8 +80,7 @@ class JcloudsDriver < BurstingDriver
     :privateAddresses
   ]
 
-  #TODO use '/usr/bin/jclouds-cli' as PATH
-  JCLOUDS_CMD = "/usr/lib/jclouds-cli/bin/jclouds-cli"
+  JCLOUDS_CMD = "/usr/bin/jclouds-cli"
 
   def initialize(host)
     
@@ -182,14 +181,6 @@ class JcloudsDriver < BurstingDriver
 
     vms_info = "VM_POLL=YES\n"
 
-    # In the case of the jclouds driver is not possible to assign a name
-    # or a TAG to the VM, as in the case of EC2 client. In this way a VM
-    # started from the OpenNebula cannot be discriminated from one started
-    # from another client. The solution here is to perform a polling call for
-    # each VM.
-    # The OpenNebula's RPC API is used To get all the instances associated
-    # with the 'host' specified.
-
     client = ::OpenNebula::Client.new()
 
     xml = client.call("host.info",host_id.to_i)
@@ -197,6 +188,13 @@ class JcloudsDriver < BurstingDriver
 
     usedcpu    = 0
     usedmemory = 0
+    
+    # In the case of the jclouds driver is not possible to assign a name
+    # or a TAG to the VM. In this way a VM started from the OpenNebula cannot
+    # be discriminated from one started from another client. 
+    # The solution here is to perform a polling call for each VM.
+    # The OpenNebula's XML-RPC Api is used to get all the instances associated
+    # with the 'host_id' specified.
 
     XPath.each(xml_host, "/HOST/VMS/ID") { |e1|
       vm_id = e1.text
