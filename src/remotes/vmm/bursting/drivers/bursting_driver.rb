@@ -36,6 +36,9 @@ require 'CommandManager'
 require 'scripts_common'
 require 'rexml/document'
 require 'VirtualMachineDriver'
+require 'opennebula'
+
+include OpenNebula
 
 # The parent class for the Bursting driver
 class BurstingDriver
@@ -66,7 +69,24 @@ class BurstingDriver
     else
       raise "Bad bursting driver type: #{type}"
     end
-  end    
+  end
+
+  # Determining the bursting 'type', currently with a XML-RPC call
+  # (it would be preferred through the ARGV arguments)
+  def self.get_type(vm_id)
+    type = ""
+    client = Client.new()
+
+    xml = client.call("vm.info", vm_id.to_i)
+
+    vm_xml = REXML::Document.new(xml) if xml
+    
+    REXML::XPath.each(vm_xml, "//PUBLIC_CLOUD/TYPE") { |e| type = e.text  }
+
+    raise "Provider type is not defined/determined" if type.empty?
+    
+    return type 
+  end  
 
   # Constructor
   def initialize(host)
@@ -277,4 +297,5 @@ private
   def destroy_instance(deploy_id)
     raise "You should implement this method."
   end
+
 end

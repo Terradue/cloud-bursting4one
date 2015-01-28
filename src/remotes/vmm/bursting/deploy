@@ -23,12 +23,12 @@ require 'bursting'
 dfile = ARGV[0]
 host  = ARGV[1]
 type  = ARGV[2]
-id    = ARGV[3]
+vm_id = ARGV[3]
 
 text = File.read(dfile)
 
 drv = BurstingDriver.create(type,host)
 
-puts drv.deploy(id, host, text)
+puts drv.deploy(vm_id, host, text)
 
 exit 0
