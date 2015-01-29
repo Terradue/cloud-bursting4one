@@ -114,9 +114,11 @@ class BurstingDriver
     end
 
     opts = generate_options(:run, info, {})
+    
+    context_xml = get_context_info(xml_text)
 
     begin
-      instance_id = create_instance(opts)
+      instance_id = create_instance(opts, context_xml)
     rescue => e
       STDERR.puts(e.message)
       exit(-1)
@@ -224,7 +226,7 @@ private
   # +xml_text+: REXML Document, containing CONTEXT information
   # +vm_id+: String, context ID (typically a representation of the VM's IP)
   # +context_path+: String, path of the context on the local filesysem
-  def create_context(xml_text, context_id, context_path)
+  def create_context(context_xml, context_id, context_path)
     context_dir = context_path + '/' + context_id
     
     # Creating context directory      
@@ -232,8 +234,6 @@ private
     
     tar_filename = 'context.tgz'
         
-    context_xml = get_context_info(xml_text)
-
     if !context_xml.nil?
       file = File.new("#{context_dir}/context.sh", 'w')
 
@@ -364,7 +364,7 @@ private
   end
     
   # Create the instance on the Public Provider
-  def create_instance(opts)
+  def create_instance(opts, context_xml)
     raise "You should implement this method."
   end
 

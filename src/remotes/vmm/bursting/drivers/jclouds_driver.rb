@@ -96,7 +96,7 @@ class JcloudsDriver < BurstingDriver
     
   end
 
-  def create_instance(opts)
+  def create_instance(opts, context_xml)
     command = self.class::PUBLIC_CMD[:run][:cmd]
 
     opts.each {|k,v|
@@ -112,15 +112,20 @@ class JcloudsDriver < BurstingDriver
       STDERR.puts e.message
         exit(-1)
     end
+    
+    # TODO manage the case of multiple addresses
+    context_id = JSON.parse(info)['publicaddresses'].gsub(".", "-")
+    
+    create_context(context_xml, context_id, @context_path)
 
     return JSON.parse(info)['id']
   end
 
-  def get_instance(id)
+  def get_instance(deploy_id)
     
     command = self.class::PUBLIC_CMD[:get][:cmd]
     
-    @args.concat(" --id #{id}")
+    @args.concat(" --id #{deploy_id}")
 
     begin
       rc, info = do_command("#{@jclouds_cmd} #{command} #{@args}")
@@ -134,15 +139,23 @@ class JcloudsDriver < BurstingDriver
     return info
   end
   
-  def destroy_instance(id)
+  def destroy_instance(deploy_id)
     command = self.class::PUBLIC_CMD[:delete][:cmd]
     
-    @args.concat(" --id #{id}")
+    info = get_instance(deploy_id)
+    
+    # TODO manage the case of multiple addresses
+    context_id = JSON.parse(info)['publicaddresses'].gsub(".", "-")
+    
+    @args.concat(" --id #{deploy_id}")
 
     begin
       rc, info = do_command("#{@jclouds_cmd} #{command} #{@args}")
       
       raise "Instance #{id} does not exist" if !rc
+      
+      remove_context(context_id, @context_path)
+      
     rescue => e
       STDERR.puts e.message
         exit(-1)
