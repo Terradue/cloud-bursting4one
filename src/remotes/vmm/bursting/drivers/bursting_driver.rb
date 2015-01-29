@@ -61,13 +61,16 @@ class BurstingDriver
   POLL_ATTRS = nil
 
   DRIVERS = {
-    :jclouds => 'jclouds'
+    :jclouds => 'jclouds',
+    :abiquo  => 'abiquo'
   }
 
   def self.create(type,host)
     case type
     when DRIVERS[:jclouds]
       JcloudsDriver.new(host)
+    when DRIVERS[:abiquo]
+      AbiquoDriver.new(host)
     else
       raise "Bad bursting driver type: #{type}"
     end

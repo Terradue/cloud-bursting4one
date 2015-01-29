@@ -19,10 +19,10 @@ require 'drivers/bursting_driver'
 
 include REXML
 
-class JcloudsDriver < BurstingDriver
+class AbiquoDriver < BurstingDriver
 
-  DRIVER_CONF    = "#{ETC_LOCATION}/jclouds_driver.conf"
-  DRIVER_DEFAULT = "#{ETC_LOCATION}/jclouds_driver.default"
+  DRIVER_CONF    = "#{ETC_LOCATION}/abiquo_driver.conf"
+  DRIVER_DEFAULT = "#{ETC_LOCATION}/abiquo_driver.default"
 
   # Commands constants
   PUBLIC_CMD = {
@@ -79,7 +79,7 @@ class JcloudsDriver < BurstingDriver
   def initialize(host)
     super(host)
 
-    @cli_cmd    = @public_cloud_conf['jclouds_cmd']
+    @cli_cmd     = @public_cloud_conf['abiquo_cmd']
     @context_path   = @public_cloud_conf['context_path']
     @instance_types = @public_cloud_conf['instance_types']
     
@@ -178,7 +178,7 @@ class JcloudsDriver < BurstingDriver
       totalcpu    += cpu * size.to_i
     }
 
-    host_info =  "HYPERVISOR=jclouds\n"
+    host_info =  "HYPERVISOR=abiquo\n"
     host_info << "PUBLIC_CLOUD=YES\n"
     host_info << "PRIORITY=-1\n"
     host_info << "TOTALMEMORY=#{totalmemory.round}\n"
@@ -265,7 +265,7 @@ class JcloudsDriver < BurstingDriver
           value_str = value
         end
 
-        info << "JCLOUDS_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
+        info << "ABIQUO_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
 
       end
     }
