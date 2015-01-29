@@ -88,24 +88,24 @@ class JcloudsDriver < BurstingDriver
     hosts = @public_cloud_conf['hosts']
     @host = hosts[host] || hosts["default"]
     
-    @args = ""
-    @args.concat(" --provider #{@host['provider']}")
-    @args.concat(" --identity #{@host['identity']}")
-    @args.concat(" --credential #{@host['credential']}")
-
-    
+    @common_args = ""
+    @common_args.concat(" --provider #{@host['provider']}")
+    @common_args.concat(" --identity #{@host['identity']}")
+    @common_args.concat(" --credential #{@host['credential']}")
   end
 
   def create_instance(opts, context_xml)
     command = self.class::PUBLIC_CMD[:run][:cmd]
+    
+    args = @common_args.clone
 
     opts.each {|k,v|
-      @args.concat(" ")
-      @args.concat("#{k} #{v}")
+      args.concat(" ")
+      args.concat("#{k} #{v}")
     }
     
     begin
-      rc, info = do_command("#{@jclouds_cmd} #{command} #{@args}")
+      rc, info = do_command("#{@jclouds_cmd} #{command} #{args}")
       
       raise "Error creating the instance" if !rc
     rescue => e
@@ -125,10 +125,12 @@ class JcloudsDriver < BurstingDriver
     
     command = self.class::PUBLIC_CMD[:get][:cmd]
     
-    @args.concat(" --id #{deploy_id}")
+    args = @common_args.clone
+    
+    args.concat(" --id #{deploy_id}")
 
     begin
-      rc, info = do_command("#{@jclouds_cmd} #{command} #{@args}")
+      rc, info = do_command("#{@jclouds_cmd} #{command} #{args}")
       
       raise "Instance #{id} does not exist" if !rc
     rescue => e
@@ -147,10 +149,12 @@ class JcloudsDriver < BurstingDriver
     # TODO manage the case of multiple addresses
     context_id = JSON.parse(info)['publicAddresses'].gsub(".", "-")
     
-    @args.concat(" --id #{deploy_id}")
+    args = @common_args.clone
+    
+    args.concat(" --id #{deploy_id}")
 
     begin
-      rc, info = do_command("#{@jclouds_cmd} #{command} #{@args}")
+      rc, info = do_command("#{@jclouds_cmd} #{command} #{args}")
       
       raise "Instance #{id} does not exist" if !rc
       
