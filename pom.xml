@@ -68,7 +68,7 @@
 							<directory>/var/lib/one/remotes/vmm/bursting</directory>
 							<sources>
 								<source>
-									<location>${basedir}/src/remotes/vmm/bursting</location>
+									<location>${basedir}/src/main/resources/remotes/vmm/bursting</location>
 								</source>
 							</sources>
 						</mapping>
@@ -76,7 +76,7 @@
 							<directory>/var/lib/one/remotes/im/bursting.d</directory>
 							<sources>
 								<source>
-									<location>${basedir}/src/remotes/im/bursting.d</location>
+									<location>${basedir}/src/main/resources/remotes/im/bursting.d</location>
 								</source>
 							</sources>
 						</mapping>
@@ -90,16 +90,21 @@
 							</sources>
 						</mapping>
 					</mappings>
-
+					<postinstallScriptlet>
+						<scriptFile>${basedir}/src/main/resources/scripts/post_install.sh</scriptFile>
+						<fileEncoding>utf-8</fileEncoding>
+					</postinstallScriptlet>
+					<postremoveScriptlet>
+						<scriptFile>${basedir}/src/main/resources/scripts/post_remove.sh</scriptFile>
+						<fileEncoding>utf-8</fileEncoding>
+					</postremoveScriptlet>
 					<provides>
 						<provide>${project.artifactId}</provide>
 					</provides>
-
-					<requires>
+	  			<requires>
 						<require>opennebula &gt;= 4.4</require>
 						<require>jclouds-cli</require>
 					</requires>
-		
 					<needarch>noarch</needarch>
 				</configuration>
 			</plugin>
