@@ -49,6 +49,7 @@ Opennebula
 * Edit the file */etc/one/oned.conf*, adding the following lines for each child driver you want to configure:
 
 ```bash
+#-------------------------------------------------------------------------------
 #  jclouds Virtualization Driver Manager Configuration
 #    -r number of retries when monitoring a host
 #    -t number of threads, i.e. number of actions performed at the same time
@@ -71,4 +72,11 @@ IM_MAD = [
       executable = "one_im_sh",
       arguments  = "-c -t 1 -r 0 jclouds" ]
 #-------------------------------------------------------------------------------
+```
+
+* Restart the core service:
+
+```bash
+su - oneadmin one stop
+su - oneadmin one start
 ```
