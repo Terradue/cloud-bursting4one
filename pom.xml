@@ -85,7 +85,7 @@
 							<username>root</username>
 							<sources>
 								<source>
-									<location>${basedir}/src/etc</location>
+									<location>${basedir}/src/main/resources/etc/</location>
 								</source>
 							</sources>
 						</mapping>
