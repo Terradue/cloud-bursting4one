@@ -18,13 +18,14 @@
 
 $: << File.dirname(__FILE__)
 
-require 'bursting_driver'
+require 'bursting'
 
 deploy_id = ARGV[0]
 host      = ARGV[1]
-id        = ARGV[2]
+vm_id     = ARGV[2]
 
-drv = BurstingDriver.new(host)
+type = BurstingDriver.get_type(vm_id)
 
-drv.poll(id, deploy_id)
+drv = BurstingDriver.create(type,host)
 
+drv.poll(vm_id, deploy_id)

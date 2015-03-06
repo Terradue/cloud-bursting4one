@@ -18,18 +18,17 @@
 
 $: << File.dirname(__FILE__)
 
-require 'bursting/factory'
-require 'bursting/factory'
+require 'bursting'
 
 dfile = ARGV[0]
 host  = ARGV[1]
-id    = ARGV[2]
+type  = ARGV[2]
+vm_id = ARGV[3]
 
-drv = BurstingDriver.new(host)
+text = File.read(dfile)
 
-text=File.read(dfile)
+drv = BurstingDriver.create(type,host)
 
-puts drv.deploy(id, host, text)
+puts drv.deploy(vm_id, host, text)
 
 exit 0
-

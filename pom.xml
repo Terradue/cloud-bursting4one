@@ -13,16 +13,17 @@
 	<packaging>rpm</packaging>
 	<name>cloud-bursting4one</name>
 	<description>Cloud bursting driver for OpenNebula</description>
-	<version>0.1-SNAPSHOT</version>
+	<version>0.1</version>
 	
 	<properties>
 		<site>default</site>
 		<redmine.projectID>cloud-bursting4one</redmine.projectID>
+		<jclouds.version>1.8.1</jclouds.version>
 	</properties>
 	
 	<scm>
 		<connection>scm:git:git@github.com:Terradue/cloud-bursting4one.git</connection>
-		<developerConnection>scm:git@github.com:Terradue/cloud-bursting4one.git</developerConnection>
+		<developerConnection>scm:git:git@github.com:Terradue/cloud-bursting4one.git</developerConnection>
 		<url>https://github.com/Terradue/cloud-bursting4one.git</url>
 		<tag>HEAD</tag>
 	</scm>
@@ -56,31 +57,54 @@
 					<group>infra</group>
 					<packager>Terradue</packager>
 					<name>${project.artifactId}</name>
-					<defaultDirmode>775</defaultDirmode>
-					<defaultFilemode>664</defaultFilemode>
-					<defaultUsername>root</defaultUsername>
-					<defaultGroupname>root</defaultGroupname>
+					<defaultDirmode>750</defaultDirmode>
+					<defaultFilemode>755</defaultFilemode>
+					<defaultUsername>oneadmin</defaultUsername>
+					<defaultGroupname>oneadmin</defaultGroupname>
 					<autoRequires>true</autoRequires>
 					<description>Cloud bursting driver for OpenNebula</description>
 					<mappings>
 						<mapping>
-							<directory>/usr/lib/t2/ruby</directory>
+							<directory>/var/lib/one/remotes/vmm/bursting</directory>
 							<sources>
 								<source>
-									<location>${project.build.directory}/src/lib</location>
+									<location>${basedir}/src/main/resources/remotes/vmm/bursting</location>
+								</source>
+							</sources>
+						</mapping>
+						<mapping>
+							<directory>/var/lib/one/remotes/im/bursting.d</directory>
+							<sources>
+								<source>
+									<location>${basedir}/src/main/resources/remotes/im/bursting.d</location>
+								</source>
+							</sources>
+						</mapping>
+						<mapping>
+							<directory>/etc/one/</directory>
+							<username>root</username>
+							<sources>
+								<source>
+									<location>${basedir}/src/etc</location>
 								</source>
 							</sources>
 						</mapping>
 					</mappings>
-
+					<postinstallScriptlet>
+						<scriptFile>${basedir}/src/main/resources/scripts/post_install.sh</scriptFile>
+						<fileEncoding>utf-8</fileEncoding>
+					</postinstallScriptlet>
+					<postremoveScriptlet>
+						<scriptFile>${basedir}/src/main/resources/scripts/post_remove.sh</scriptFile>
+						<fileEncoding>utf-8</fileEncoding>
+					</postremoveScriptlet>
 					<provides>
 						<provide>${project.artifactId}</provide>
 					</provides>
-
-					<requires>
+	  			<requires>
 						<require>opennebula &gt;= 4.4</require>
+						<require>jclouds-cli</require>
 					</requires>
-		
 					<needarch>noarch</needarch>
 				</configuration>
 			</plugin>

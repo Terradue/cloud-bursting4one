@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+
 # -------------------------------------------------------------------------- #
 # Copyright 2015, Terradue S.r.l.                                            #
 #                                                                            #
@@ -15,8 +16,16 @@
 # limitations under the License.                                             #
 # -------------------------------------------------------------------------- #
 
-module AbstractDriverFactory
-  def create(host)
-    raise NotImplementedError, "You should implement this method."
-  end
-end
+$: << File.dirname(__FILE__)
+
+require 'bursting'
+
+deploy_id = ARGV[0]
+host      = ARGV[1]
+vm_id     = ARGV[2]
+
+type = BurstingDriver.get_type(vm_id)
+
+drv = BurstingDriver.create(type,host)
+
+drv.cancel(deploy_id)

@@ -1,4 +1,5 @@
-#!/usr/bin/env ruby
+#!/bin/bash
+
 # -------------------------------------------------------------------------- #
 # Copyright 2015, Terradue S.r.l.                                            #
 #                                                                            #
@@ -13,10 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
 # See the License for the specific language governing permissions and        #
 # limitations under the License.                                             #
-# -------------------------------------------------------------------------- #
+#--------------------------------------------------------------------------- #
 
-require 'bursting_driver'
-
-class JcloudsDriver < BurstingDriver
-
-end
+SCRIPT_NAME=$(basename $0)
+echo "Action $SCRIPT_NAME not supported" 1>&2

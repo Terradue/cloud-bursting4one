@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 # -------------------------------------------------------------------------- #
 # Copyright 2015, Terradue S.r.l.                                            #
 #                                                                            #
@@ -16,14 +14,7 @@
 # limitations under the License.                                             #
 # -------------------------------------------------------------------------- #
 
-$: << File.dirname(__FILE__)
+module Bursting; end
 
-require 'bursting_driver'
-
-deploy_id = ARGV[0]
-file      = ARGV[1]
-host      = ARGV[2]
-
-drv = BurstingDriver.new(host)
-drv.save(deploy_id)
-
+require 'drivers/bursting_driver'
+require 'drivers/jclouds_driver'
