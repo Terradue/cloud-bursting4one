@@ -114,7 +114,7 @@ class JcloudsDriver < BurstingDriver
     end
     
     # TODO manage the case of multiple addresses
-    context_id = JSON.parse(info)['publicAddresses'].gsub(".", "-")
+    context_id = JSON.parse(info)['privateAddresses'].gsub(".", "-")
     
     create_context(context_xml, context_id, @context_path)
 
@@ -265,6 +265,8 @@ class JcloudsDriver < BurstingDriver
           value_str = value
         end
 
+	# TODO: In the case of _PUBLICADDRESSES or _PRIVATEADDRESSES keys, handle the case in which multiple addresses are passed.
+	# Use comma-separated list (e.g., interface to E-CEO portal)
         info << "JCLOUDS_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
 
       end

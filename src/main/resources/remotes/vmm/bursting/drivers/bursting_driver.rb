@@ -230,7 +230,7 @@ private
   # +vm_id+: String, context ID (typically a representation of the VM's IP)
   # +context_path+: String, path of the context on the local filesysem
   def create_context(context_xml, context_id, context_path)
-    context_dir = context_path + '/' + context_id
+    context_dir = context_path + '/' + context_id + '/context'
     
     # Creating context directory      
     FileUtils.mkdir_p context_dir
@@ -265,7 +265,7 @@ private
         
     # Creating the tarball
     begin                
-      rc, info = do_command("cd #{context_dir}; tar -cvzf #{tar_filename} * > /dev/null 2>&1")
+      rc, info = do_command("cd #{context_dir}; cd ..; tar -cvzf #{tar_filename} context > /dev/null 2>&1")
      
       raise "Error creating context tarball #{tar_filename}" if !rc
     rescue => e

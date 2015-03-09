@@ -22,13 +22,21 @@ require 'bursting'
 
 dfile = ARGV[0]
 host  = ARGV[1]
-type  = ARGV[2]
-vm_id = ARGV[3]
+vm_id = ARGV[2]
+type = ""
 
-text = File.read(dfile)
+xml_text = File.read(dfile)
+
+# Find the driver type
+# (it would be preferred through the ARGV arguments)
+xml = REXML::Document.new xml_text
+context_xml = xml.root.get_elements("//CONTEXT")
+
+REXML::XPath.each(context_xml, "//PUBLIC_CLOUD/TYPE") { |e| type = e.text  }
+raise "Provider type is not defined/determined" if type.empty?
 
 drv = BurstingDriver.create(type,host)
 
-puts drv.deploy(vm_id, host, text)
+puts drv.deploy(vm_id, host, xml_text)
 
 exit 0
