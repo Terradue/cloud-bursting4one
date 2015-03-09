@@ -114,7 +114,7 @@ class JcloudsDriver < BurstingDriver
     end
     
     # TODO manage the case of multiple addresses
-    context_id = JSON.parse(info)['publicAddresses'].gsub(".", "-")
+    context_id = JSON.parse(info)['privateAddresses'].gsub(".", "-")
     
     create_context(context_xml, context_id, @context_path)
 
