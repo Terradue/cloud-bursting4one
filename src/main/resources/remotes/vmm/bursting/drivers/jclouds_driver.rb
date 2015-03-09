@@ -265,6 +265,8 @@ class JcloudsDriver < BurstingDriver
           value_str = value
         end
 
+	# TODO: In the case of _PUBLICADDRESSES or _PRIVATEADDRESSES keys, handle the case in which multiple addresses are passed.
+	# Use comma-separated list (e.g., interface to E-CEO portal)
         info << "JCLOUDS_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
 
       end
