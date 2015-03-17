@@ -19,40 +19,36 @@ require 'drivers/bursting_driver'
 
 include REXML
 
-class AbiquoDriver < BurstingDriver
+class CloudStackDriver < BurstingDriver
 
-  DRIVER_CONF    = "#{ETC_LOCATION}/abiquo_driver.conf"
-  DRIVER_DEFAULT = "#{ETC_LOCATION}/abiquo_driver.default"
+  DRIVER_CONF    = "#{ETC_LOCATION}/cloud_stack_driver.conf"
+  DRIVER_DEFAULT = "#{ETC_LOCATION}/cloud_stack_driver.default"
 
   # Commands constants
   PUBLIC_CMD = {
     :run => {
       :cmd => :add,
       :args => {
-        "HARDWAREID" => {
-          :opt => '--hardwareid'
+        "ZONEID" => {
+          :opt => 'zoneid'
         },
-        "IMAGEID" => {
-          :opt => '--imageid'
+        "TEMPLATEID" => {
+          :opt => 'templateid'
         },
-        "GROUP" => {
-          :opt => '--group'
+        "SERVICEOFFERINGID" => {
+          :opt => 'serviceofferingid'
         },
       },
     },
     :get => {
       :cmd => :listnodes,
-      :args => {
-        "ID" => {
-          :opt => '--id'
-        },
       },
     },
     :shutdown => {
       :cmd => :destroy,
       :args => {
         "ID" => {
-          :opt => '--id'
+          :opt => 'id'
         },
       },
     },
@@ -79,7 +75,7 @@ class AbiquoDriver < BurstingDriver
   def initialize(host)
     super(host)
 
-    @cli_cmd     = @public_cloud_conf['abiquo_cmd']
+    @cli_cmd     = @public_cloud_conf['cloud_stack_cmd']
     @context_path   = @public_cloud_conf['context_path']
     @instance_types = @public_cloud_conf['instance_types']
     
@@ -265,7 +261,7 @@ class AbiquoDriver < BurstingDriver
           value_str = value
         end
 
-        info << "ABIQUO_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
+        info << "CLOUDSTACK_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
 
       end
     }
