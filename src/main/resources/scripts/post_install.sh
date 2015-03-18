@@ -3,7 +3,7 @@
 prefix="/var/lib/one/remotes"
 
 # Creating the soft links
-for driver in jclouds abiquo
+for driver in jclouds cloudstack
 do
     # vmm
     src="${prefix}/vmm/bursting"

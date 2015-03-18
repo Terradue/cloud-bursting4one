@@ -108,32 +108,14 @@ class CloudStackDriver < BurstingDriver
         exit(-1)
     end
     
+    # Set also 'displayname' attribute using the OpenNebula ID
+    
     # TODO manage the case of multiple addresses
     context_id = JSON.parse(info)['publicAddresses'].gsub(".", "-")
     
     create_context(context_xml, context_id, @context_path)
 
     return JSON.parse(info)['id']
-  end
-
-  def get_instance(deploy_id)
-    
-    command = self.class::PUBLIC_CMD[:get][:cmd]
-    
-    args = @common_args.clone
-    
-    args.concat(" --id #{deploy_id}")
-
-    begin
-      rc, info = do_command("#{@cli_cmd} #{command} #{args}")
-      
-      raise "Instance #{id} does not exist" if !rc
-    rescue => e
-      STDERR.puts e.message
-        exit(-1)
-    end
-
-    return info
   end
   
   def destroy_instance(deploy_id)
@@ -149,7 +131,7 @@ class CloudStackDriver < BurstingDriver
     args.concat(" --id #{deploy_id}")
 
     begin
-      rc, info = do_command("#{@cli_cmd} #{command} #{args}")
+      rc, info = deploy_ido_command("#{@cli_cmd} #{command} #{args}")
       
       raise "Instance #{id} does not exist" if !rc
       
@@ -164,6 +146,10 @@ class CloudStackDriver < BurstingDriver
   end
 
   def monitor_all_vms(host_id)
+    command = self.class::PUBLIC_CMD[:get][:cmd]
+    
+    args = @common_args.clone
+    
     totalmemory = 0
     totalcpu = 0
     @host['capacity'].each { |name, size|
@@ -173,7 +159,7 @@ class CloudStackDriver < BurstingDriver
       totalcpu    += cpu * size.to_i
     }
 
-    host_info =  "HYPERVISOR=abiquo\n"
+    host_info =  "HYPERVISOR=cloudstack\n"
     host_info << "PUBLIC_CLOUD=YES\n"
     host_info << "PRIORITY=-1\n"
     host_info << "TOTALMEMORY=#{totalmemory.round}\n"
@@ -183,48 +169,21 @@ class CloudStackDriver < BurstingDriver
 
     vms_info = "VM_POLL=YES\n"
 
-    client = ::OpenNebula::Client.new()
-
-    xml = client.call("host.info",host_id.to_i)
-    xml_host = REXML::Document.new(xml) if xml
-
     usedcpu    = 0
     usedmemory = 0
     
-    # In the case of the jclouds driver is not possible to assign a name
-    # or a TAG to the VM. In this way a VM started from the OpenNebula cannot
-    # be discriminated from one started from another client. 
-    # The solution here is to perform a polling call for each VM.
-    # The OpenNebula's XML-RPC Api is used to get all the instances associated
-    # with the 'host_id' specified.
-
-    XPath.each(xml_host, "/HOST/VMS/ID") { |e1|
-      vm_id = e1.text
-
-      xml = client.call("vm.info", vm_id.to_i)
-      xml_vm = REXML::Document.new(xml) if xml
-
-      deploy_id = ""
-      poll_data = ""
-      
-      XPath.each(xml_vm, "/VM/DEPLOY_ID") { |e2| deploy_id = e2.text }
-
-      if !deploy_id.nil?
-	if !deploy_id.empty?
-          instance = get_instance(deploy_id)
-          poll_data = parse_poll(instance)
+    rc, info = do_command("#{@cli_cmd} #{command} #{args}")
+    poll_data = parse_poll(info)
  
-          vms_info << "VM=[\n"
-                    vms_info << "  ID=#{vm_id || -1},\n"
-                    vms_info << "  DEPLOY_ID=#{deploy_id},\n"
-                    vms_info << "  POLL=\"#{poll_data}\" ]\n"
-        end
-      end
+    # To iterate over poll data
+    #vms_info << "VM=[\n"
+    #          vms_info << "  ID=#{vm_id || -1},\n"
+    #          vms_info << "  DEPLOY_ID=#{deploy_id},\n"
+    #          vms_info << "  POLL=\"#{poll_data}\" ]\n"
 
-    }
-
+    puts poll_data
     puts host_info
-    puts vms_info
+    #puts vms_info
   end
 
   def parse_poll(instance_info)
