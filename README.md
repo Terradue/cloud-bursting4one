@@ -13,7 +13,7 @@ sudo yum install -y cloud-bursting4one
 The generic bursting driver includes the following child drivers:
 
 * jclouds
-* cloudmonkey (upcoming!)
+* cloudstack (upcoming!)
 
 Configuration
 -------------
