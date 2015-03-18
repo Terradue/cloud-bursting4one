@@ -27,7 +27,7 @@ class CloudStackDriver < BurstingDriver
   # Commands constants
   PUBLIC_CMD = {
     :run => {
-      :cmd => :add,
+      :cmd => :deploy,
       :args => {
         "ZONEID" => {
           :opt => 'zoneid'
@@ -41,7 +41,9 @@ class CloudStackDriver < BurstingDriver
       },
     },
     :get => {
-      :cmd => :listnodes,
+      :cmd => :list,
+      :args => {
+        :virtualmachines,
       },
     },
     :shutdown => {
@@ -56,7 +58,7 @@ class CloudStackDriver < BurstingDriver
       :cmd => :reboot
     },
     :stop => {
-      :cmd => :destroy
+      :cmd => :stop
     },
     :start => {
       :cmd => :start
@@ -84,10 +86,7 @@ class CloudStackDriver < BurstingDriver
     hosts = @public_cloud_conf['hosts']
     @host = hosts[host] || hosts["default"]
     
-    @common_args = ""
-    @common_args.concat(" --provider #{@host['provider']}")
-    @common_args.concat(" --identity #{@host['identity']}")
-    @common_args.concat(" --credential #{@host['credential']}")
+    @common_args = " -c #{@host['config_file']}"
   end
 
   def create_instance(opts, context_xml)
