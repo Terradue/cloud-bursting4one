@@ -21,7 +21,7 @@ Configuration
 General
 ^^^^^^^
 
-* To configure general settings for a child driver, just edit the file */etc/one/<driver_name>_driver.conf*. For example for *jclouds*:
+* To configure general settings for a child driver, just edit the file /etc/one/<driver_name>_driver.conf*. For example for *jclouds*:
 
 ```bash
 jclouds_cmd: /usr/bin/jclouds-cli
@@ -31,7 +31,7 @@ context_path: /data/cloud/remote_context/jclouds/iso
 Accounts
 ^^^^^^^^
 
-* To configure the accounts for a child driver, just edit the file */etc/one/<driver_name>_driver.conf*. For example for *jclouds*:
+* To configure the accounts for a child driver, just edit the file /etc/one/<driver_name>_driver.conf. For example for *jclouds*:
 
 ```bash
 hosts:
