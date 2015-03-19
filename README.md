@@ -18,20 +18,17 @@ The generic bursting driver includes the following child drivers:
 Configuration
 -------------
 
-General
+Driver
 ^^^^^^^
 
-* To configure general settings for a child driver, just edit the file /etc/one/<driver_name>_driver.conf*. For example for *jclouds*:
+* To configure the *general settings* for a child driver, just edit the file /etc/one/*driver_name*_driver.conf. For example for *jclouds*:
 
 ```bash
 jclouds_cmd: /usr/bin/jclouds-cli
 context_path: /data/cloud/remote_context/jclouds/iso
 ```
 
-Accounts
-^^^^^^^^
-
-* To configure the accounts for a child driver, just edit the file /etc/one/<driver_name>_driver.conf. For example for *jclouds*:
+* To configure the *accounts* for a child driver, just edit the file /etc/one/*driver_name*_driver.conf. For example for *jclouds*:
 
 ```bash
 hosts:
@@ -52,6 +49,11 @@ hosts:
             m1.large: 0
             m1.xlarge: 0
 ```
+
+NOTE
+****
+
+Depending on the child driver, the content of the configuration file could be different.
 
 Opennebula
 ^^^^^^^^^^
