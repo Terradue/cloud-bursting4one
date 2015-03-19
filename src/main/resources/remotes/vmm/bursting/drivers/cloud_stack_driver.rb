@@ -21,8 +21,8 @@ include REXML
 
 class CloudStackDriver < BurstingDriver
 
-  DRIVER_CONF    = "#{ETC_LOCATION}/cloud_stack_driver.conf"
-  DRIVER_DEFAULT = "#{ETC_LOCATION}/cloud_stack_driver.default"
+  DRIVER_CONF    = "#{ETC_LOCATION}/cloudstack_driver.conf"
+  DRIVER_DEFAULT = "#{ETC_LOCATION}/cloudstack_driver.default"
 
   # Commands constants
   PUBLIC_CMD = {
@@ -41,10 +41,8 @@ class CloudStackDriver < BurstingDriver
       },
     },
     :get => {
-      :cmd => :list,
-      :args => {
-        :virtualmachines,
-      },
+      :cmd =>  :list,
+      :args => :virtualmachines,
     },
     :shutdown => {
       :cmd => :destroy,
@@ -77,7 +75,7 @@ class CloudStackDriver < BurstingDriver
   def initialize(host)
     super(host)
 
-    @cli_cmd     = @public_cloud_conf['cloud_stack_cmd']
+    @cli_cmd     = @public_cloud_conf['cloudstack_cmd']
     @context_path   = @public_cloud_conf['context_path']
     @instance_types = @public_cloud_conf['instance_types']
     
