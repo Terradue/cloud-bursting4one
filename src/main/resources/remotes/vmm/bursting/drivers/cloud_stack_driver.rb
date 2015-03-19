@@ -69,7 +69,8 @@ class CloudStackDriver < BurstingDriver
   # CLI specific attributes that will be retrieved in a polling action
   POLL_ATTRS = [
     :publicAddresses,
-    :privateAddresses
+    :privateAddresses,
+    :displayname
   ]
 
   def initialize(host)
@@ -84,7 +85,7 @@ class CloudStackDriver < BurstingDriver
     hosts = @public_cloud_conf['hosts']
     @host = hosts[host] || hosts["default"]
     
-    @common_args = " -c #{@host['config_file']}"
+    @auth = " -c #{@host['config_file']}"
   end
 
   def create_instance(opts, context_xml)
@@ -145,9 +146,8 @@ class CloudStackDriver < BurstingDriver
 
   def monitor_all_vms(host_id)
     command = self.class::PUBLIC_CMD[:get][:cmd]
-    
-    args = @common_args.clone
-    
+    args = self.class::PUBLIC_CMD[:get][:args]
+        
     totalmemory = 0
     totalcpu = 0
     @host['capacity'].each { |name, size|
@@ -170,8 +170,8 @@ class CloudStackDriver < BurstingDriver
     usedcpu    = 0
     usedmemory = 0
     
-    rc, info = do_command("#{@cli_cmd} #{command} #{args}")
-    poll_data = parse_poll(info)
+    rc, info = do_command("#{@cli_cmd} #{@auth} #{command} #{args}")
+    poll_data = parse_poll(info) if !info.empty?
  
     # To iterate over poll data
     #vms_info << "VM=[\n"
@@ -196,7 +196,7 @@ class CloudStackDriver < BurstingDriver
     if !instance
       state = VM_STATE[:deleted]
     else
-      state = case instance['status']
+      state = case instance['state']
       when "RUNNING", "STARTING"
         VM_STATE[:active]
       when "SUSPENDED", "STOPPING", 
