@@ -55,8 +55,8 @@ NOTE
 
 Depending on the child driver, the content of the configuration file could be different.
 
-Opennebula
-^^^^^^^^^^
+Opennebula Core
+^^^^^^^^^^^^^^^
 
 * Edit the file */etc/one/oned.conf*, adding the following lines for each child driver you want to configure:
 
@@ -91,4 +91,14 @@ IM_MAD = [
 ```bash
 su - oneadmin one stop
 su - oneadmin one start
+```
+
+Adding Host
+------------
+
+* Create the host:
+
+```bash
+su - oneadmin
+onehost create ec2-eceo --im jclouds --vm jclouds --net dummy
 ```
