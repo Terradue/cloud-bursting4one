@@ -32,19 +32,21 @@ class CloudStackDriver < BurstingDriver
       :cmd => :deploy,
       :args => {
         "ZONEID" => {
-          :opt => 'zoneid'
+          :opt => 'zoneid='
         },
         "TEMPLATEID" => {
-          :opt => 'templateid'
+          :opt => 'templateid='
         },
         "SERVICEOFFERINGID" => {
-          :opt => 'serviceofferingid'
+          :opt => 'serviceofferingid='
         },
       },
     },
     :get => {
       :cmd =>  :list,
-      :args => :virtualmachines,
+      :args => {
+        :virtualmachines,
+      },
     },
     :shutdown => {
       :cmd => :destroy,
@@ -144,10 +146,30 @@ class CloudStackDriver < BurstingDriver
 
     return info
   end
+  
+  def get_instance(deploy_id)
+    
+    command = self.class::PUBLIC_CMD[:get][:cmd]
+    args = self.class::PUBLIC_CMD[:get][:virtualmachines]
+    
+    args.concat(" id=#{deploy_id}")
+
+    begin
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{command} #{args}")
+      
+      raise "Instance #{id} does not exist" if !rc
+    rescue => e
+      STDERR.puts e.message
+        exit(-1)
+    end
+
+    return info
+  end
 
   def monitor_all_vms(host_id)
+    
     command = self.class::PUBLIC_CMD[:get][:cmd]
-    args = self.class::PUBLIC_CMD[:get][:args]
+    args = self.class::PUBLIC_CMD[:get][:virtualmachines]
         
     totalmemory = 0
     totalcpu = 0
