@@ -127,7 +127,7 @@ class BurstingDriver
     context_xml = get_context_info(xml_text)
 
     begin
-      instance_id = create_instance(opts, context_xml)
+      instance_id = create_instance(vm_id, opts, context_xml)
     rescue => e
       STDERR.puts(e.message)
       exit(-1)
@@ -235,8 +235,8 @@ private
   # +xml_text+: REXML Document, containing CONTEXT information
   # +vm_id+: String, context ID (typically a representation of the VM's IP)
   # +context_path+: String, path of the context on the local filesysem
-  def create_context(context_xml, context_id, context_path)
-    context_dir = context_path + '/' + context_id + '/context'
+  def create_context(context_xml, context_id)
+    context_dir = @context_path + '/' + context_id + '/context'
     
     # Creating context directory      
     FileUtils.mkdir_p context_dir
@@ -282,11 +282,10 @@ private
   
   # Remove the context files from the local filesystem
   # +vm_id+: String, context ID (typically a representation of the VM's IP)
-  # +context_path+: String, path of the context on the local filesysem
-  def remove_context(context_id, context_path)
-    context_dir = context_path + '/' + context_id
+  def remove_context(context_id)
+    context_dir = @context_path + '/' + context_id
     
-    FileUtils.rm_rf context_dir
+    FileUtils.rm_rf context_dir if File.directory?(context_dir)
   end
 
   # Generate the options for the given command from the xml provided in the
@@ -373,7 +372,7 @@ private
   end
     
   # Create the instance on the Public Provider
-  def create_instance(opts, context_xml)
+  def create_instance(vm_id, opts, context_xml)
     raise "You should implement this method."
   end
 

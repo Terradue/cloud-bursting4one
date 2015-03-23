@@ -32,21 +32,19 @@ class CloudStackDriver < BurstingDriver
       :cmd => :deploy,
       :args => {
         "ZONEID" => {
-          :opt => 'zoneid='
+          :opt => 'zoneid'
         },
         "TEMPLATEID" => {
-          :opt => 'templateid='
+          :opt => 'templateid'
         },
         "SERVICEOFFERINGID" => {
-          :opt => 'serviceofferingid='
+          :opt => 'serviceofferingid'
         },
       },
     },
     :get => {
-      :cmd =>  :list,
-      :args => {
-        :virtualmachines,
-      },
+      :cmd    =>  :list,
+      :subcmd => :virtualmachines,
     },
     :shutdown => {
       :cmd => :destroy,
@@ -72,14 +70,15 @@ class CloudStackDriver < BurstingDriver
 
   # Child driver specific attributes
   DRV_POLL_ATTRS = {
-    :ipaddress => POLL_ATTRS[:privateaddresses],
+    :ipaddress     => POLL_ATTRS[:privateaddresses],
     :publicaddress => POLL_ATTRS[:publicaddresses]
   }
 
   def initialize(host)
+    
     super(host)
 
-    @cli_cmd     = @public_cloud_conf['cloudstack_cmd']
+    @cli_cmd        = @public_cloud_conf['cloudstack_cmd']
     @context_path   = @public_cloud_conf['context_path']
     @instance_types = @public_cloud_conf['instance_types']
     
@@ -88,21 +87,25 @@ class CloudStackDriver < BurstingDriver
     hosts = @public_cloud_conf['hosts']
     @host = hosts[host] || hosts["default"]
     
-    @auth = " -c #{@host['config_file']}"
+    @auth = "-c #{@host['config_file']}"
   end
 
-  def create_instance(opts, context_xml)
-    command = self.class::PUBLIC_CMD[:run][:cmd]
+  def create_instance(vm_id, opts, context_xml)
     
-    args = @common_args.clone
+    cmd = self.class::PUBLIC_CMD[:run][:cmd]
+    
+    args = ""
 
     opts.each {|k,v|
       args.concat(" ")
-      args.concat("#{k} #{v}")
+      args.concat("#{k}=#{v}")
     }
     
+    args.concat(" ")
+    args.concat("displayname=one-#{vmid}")
+    
     begin
-      rc, info = do_command("#{@cli_cmd} #{command} #{args}")
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{args}")
       
       raise "Error creating the instance" if !rc
     rescue => e
@@ -110,35 +113,41 @@ class CloudStackDriver < BurstingDriver
         exit(-1)
     end
     
-    # Set also 'displayname' attribute using the OpenNebula ID
+    # The context_id is one of the privateaddresses.
+    # The safest solution is to create a context for all the privateaddresses 
+    # associated to the vm.
+    key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
+    privateaddresses = JsonPath.on(info, "$..#{key}")
     
-    # TODO manage the case of multiple addresses
-    context_id = JSON.parse(info)['publicAddresses'].gsub(".", "-")
-    
-    create_context(context_xml, context_id, @context_path)
+    privateaddresses.each { |privateaddress|
+      create_context(context_xml, privateaddress.gsub(".", "-"))
+    }
 
-    return JSON.parse(info)['id']
+    return JsonPath.on(info, "$..displayname")[0]
   end
   
   def destroy_instance(deploy_id)
+    
     command = self.class::PUBLIC_CMD[:delete][:cmd]
+    args = "id=#{deploy_id}"
     
-    info = get_instance(deploy_id)
-    
-    # TODO manage the case of multiple addresses
-    context_id = JSON.parse(info)['publicAddresses'].gsub(".", "-")
-    
-    args = @common_args.clone
-    
-    args.concat(" --id #{deploy_id}")
-
+    vm = get_instance(deploy_id)
+  
     begin
-      rc, info = deploy_ido_command("#{@cli_cmd} #{command} #{args}")
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{command} #{args}")
       
       raise "Instance #{id} does not exist" if !rc
       
-      remove_context(context_id, @context_path)
+      # The context_id is one of the privateaddresses.
+      # The safest solution is to check and remove all the privateaddresses 
+      # associated to the vm.    
+      key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
+      privateaddresses = JsonPath.on(vm, "$..#{key}")
       
+      privateaddresses.each { |privateaddress|
+        remove_context(privateaddress.gsub(".", "-"))
+      }
+
     rescue => e
       STDERR.puts e.message
         exit(-1)
@@ -149,13 +158,13 @@ class CloudStackDriver < BurstingDriver
   
   def get_instance(deploy_id)
     
-    command = self.class::PUBLIC_CMD[:get][:cmd]
-    args = self.class::PUBLIC_CMD[:get][:virtualmachines]
+    cmd    = self.class::PUBLIC_CMD[:get][:cmd]
+    subcmd = self.class::PUBLIC_CMD[:get][:subcmd]
     
-    args.concat(" id=#{deploy_id}")
+    args = "id=#{deploy_id}"
 
     begin
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{command} #{args}")
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
       
       raise "Instance #{id} does not exist" if !rc
     rescue => e
@@ -168,8 +177,8 @@ class CloudStackDriver < BurstingDriver
 
   def monitor_all_vms(host_id)
     
-    command = self.class::PUBLIC_CMD[:get][:cmd]
-    args = self.class::PUBLIC_CMD[:get][:virtualmachines]
+    cmd    = self.class::PUBLIC_CMD[:get][:cmd]
+    subcmd = self.class::PUBLIC_CMD[:get][:subcmd]
         
     totalmemory = 0
     totalcpu = 0
@@ -193,7 +202,7 @@ class CloudStackDriver < BurstingDriver
     usedcpu    = 0
     usedmemory = 0
     
-    rc, info = do_command("#{@cli_cmd} #{@auth} #{command} #{args}")
+    rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd}")
     
     if !info.empty?
       instance = JSON.parse(info) if !info.empty?
@@ -219,6 +228,7 @@ class CloudStackDriver < BurstingDriver
   end
 
   def parse_poll(instance)
+    
     begin
       info =  "#{POLL_ATTRIBUTE[:usedmemory]}=0 " \
               "#{POLL_ATTRIBUTE[:usedcpu]}=0 " \
@@ -261,6 +271,7 @@ class CloudStackDriver < BurstingDriver
 private
 
   def do_command(cmd)
+    
     rc = LocalCommand.run(cmd)
 
     if rc.code == 0
