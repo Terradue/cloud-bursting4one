@@ -16,6 +16,8 @@
 # -------------------------------------------------------------------------- #
 
 require 'drivers/bursting_driver'
+require 'jsonpath'
+require 'uri'
 
 include REXML
 
@@ -66,12 +68,11 @@ class CloudStackDriver < BurstingDriver
     }
   }
 
-  # CLI specific attributes that will be retrieved in a polling action
-  POLL_ATTRS = [
-    :publicAddresses,
-    :privateAddresses,
-    :displayname
-  ]
+  # Child driver specific attributes
+  DRV_POLL_ATTRS = {
+    :ipaddress => POLL_ATTRS[:privateaddresses],
+    :publicaddress => POLL_ATTRS[:publicaddresses]
+  }
 
   def initialize(host)
     super(host)
@@ -171,58 +172,68 @@ class CloudStackDriver < BurstingDriver
     usedmemory = 0
     
     rc, info = do_command("#{@cli_cmd} #{@auth} #{command} #{args}")
-    poll_data = parse_poll(info) if !info.empty?
- 
-    # To iterate over poll data
-    #vms_info << "VM=[\n"
-    #          vms_info << "  ID=#{vm_id || -1},\n"
-    #          vms_info << "  DEPLOY_ID=#{deploy_id},\n"
-    #          vms_info << "  POLL=\"#{poll_data}\" ]\n"
-
-    puts poll_data
-    puts host_info
-    #puts vms_info
-  end
-
-  def parse_poll(instance_info)
-    info =  "#{POLL_ATTRIBUTE[:usedmemory]}=0 " \
-            "#{POLL_ATTRIBUTE[:usedcpu]}=0 " \
-            "#{POLL_ATTRIBUTE[:nettx]}=0 " \
-            "#{POLL_ATTRIBUTE[:netrx]}=0 "
-
-    instance = JSON.parse(instance_info)
-
-    state = ""
-    if !instance
-      state = VM_STATE[:deleted]
-    else
-      state = case instance['state']
-      when "RUNNING", "STARTING"
-        VM_STATE[:active]
-      when "SUSPENDED", "STOPPING", 
-        VM_STATE[:paused]
-      else
-        VM_STATE[:deleted]
-      end
+    
+    if !info.empty?
+      instance = JSON.parse(info) if !info.empty?
+    
+      # For each instance 'virtualmachine'
+      instance['virtualmachine'].each { |vm|
+        next if vm["state"] != :pending && vm["state"] != :running
+        
+        poll_data = parse_poll(vm)
+        
+        deploy_id = vm["displayname"]
+        vm_id = deploy_id.match(/one-(.*)/)[1]
+        
+        vms_info << "VM=[\n"
+                  vms_info << "  ID=#{vm_id || -1},\n"
+                  vms_info << "  DEPLOY_ID=#{deploy_id},\n"
+                  vms_info << "  POLL=\"#{poll_data}\" ]\n"
+      }
     end
     
-    info << "#{POLL_ATTRIBUTE[:state]}=#{state} "
+    puts host_info
+    puts vms_info
+  end
 
-    POLL_ATTRS.map { |key|
-      value = instance["#{key}"]
-      if !value.nil? && !value.empty?
-        if value.kind_of?(Hash)
-          value_str = value.inspect
+  def parse_poll(instance)
+    begin
+      info =  "#{POLL_ATTRIBUTE[:usedmemory]}=0 " \
+              "#{POLL_ATTRIBUTE[:usedcpu]}=0 " \
+              "#{POLL_ATTRIBUTE[:nettx]}=0 " \
+              "#{POLL_ATTRIBUTE[:netrx]}=0 "
+
+      state = ""
+      if !instance
+        state = VM_STATE[:deleted]
+      else
+        state = case instance['state']
+        when "RUNNING", "STARTING"
+          VM_STATE[:active]
+        when "SUSPENDED", "STOPPING", 
+          VM_STATE[:paused]
         else
-          value_str = value
+          VM_STATE[:deleted]
         end
-
-        info << "CLOUDSTACK_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
-
       end
-    }
-
-    return info
+    
+      info << "#{POLL_ATTRIBUTE[:state]}=#{state} "
+    
+      # search for the value(s) corresponding to the DRV_POLL_ATTRS keys
+      DRV_POLL_ATTRS.map { |key, value|
+        results = JsonPath.on(vm, "$..#{key}")
+        if results.length > 0
+          results.join(",")
+          info << "CLOUDSTACK_#{value.to_s.upcase}=#{URI::encode(results.join(","))} "
+        end  
+      }
+    
+      info
+    rescue
+      # Unkown state if exception occurs retrieving information from
+      # an instance
+      "#{POLL_ATTRIBUTE[:state]}=#{VM_STATE[:unknown]} "
+    end
   end
  
 private

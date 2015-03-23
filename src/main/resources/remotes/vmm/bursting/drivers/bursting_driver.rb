@@ -57,8 +57,14 @@ class BurstingDriver
   # Public provider commands costants
   PUBLIC_CMD = nil
 
-  # Public provider attributes that will be retrieved in a polling action
-  POLL_ATTRS = nil
+  # Generic polling attributes
+  POLL_ATTRS = {
+    :privateaddresses => "PRIVATEADDRESSES",
+    :publicaddresses => "PUBLICADDRESSES"
+  }
+
+  # Child driver specific attributes  
+  DRV_POLL_ATTRS = nil
 
   DRIVERS = {
     :jclouds => 'jclouds',
