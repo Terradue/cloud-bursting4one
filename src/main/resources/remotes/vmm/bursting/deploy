@@ -22,7 +22,7 @@ require 'bursting'
 
 dfile = ARGV[0]
 host  = ARGV[1]
-vm_id = ARGV[2]
+vm_id = ARGV[3]
 type = ""
 
 xml_text = File.read(dfile)

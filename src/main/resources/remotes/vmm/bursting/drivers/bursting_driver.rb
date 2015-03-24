@@ -116,11 +116,11 @@ class BurstingDriver
 
     info = get_deployment_info(host, xml_text)
 
-    # TODO Make an abstraction of the validation phase
-    if !value(info, 'IMAGEID')
-      STDERR.puts("Cannot find IMAGEID in deployment file")
-      exit(-1)
-    end
+    #TODO Make an abstraction of the validation phase
+    #if !value(info, 'IMAGEID')
+    #  STDERR.puts("Cannot find IMAGEID in deployment file")
+    #  exit(-1)
+    #end
 
     opts = generate_options(:run, info, {})
     

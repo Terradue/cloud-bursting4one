@@ -30,6 +30,7 @@ class CloudStackDriver < BurstingDriver
   PUBLIC_CMD = {
     :run => {
       :cmd => :deploy,
+      :subcmd => :virtualmachine,
       :args => {
         "ZONEID" => {
           :opt => 'zoneid'
@@ -43,11 +44,12 @@ class CloudStackDriver < BurstingDriver
       },
     },
     :get => {
-      :cmd    =>  :list,
+      :cmd    => :list,
       :subcmd => :virtualmachines,
     },
-    :shutdown => {
+    :delete => {
       :cmd => :destroy,
+      :subcmd => :virtualmachine,
       :args => {
         "ID" => {
           :opt => 'id'
@@ -62,9 +64,6 @@ class CloudStackDriver < BurstingDriver
     },
     :start => {
       :cmd => :start
-    },
-    :delete => {
-      :cmd => :destroy
     }
   }
 
@@ -92,7 +91,8 @@ class CloudStackDriver < BurstingDriver
 
   def create_instance(vm_id, opts, context_xml)
     
-    cmd = self.class::PUBLIC_CMD[:run][:cmd]
+    cmd    = self.class::PUBLIC_CMD[:run][:cmd]
+    subcmd = self.class::PUBLIC_CMD[:run][:subcmd]
     
     args = ""
 
@@ -102,10 +102,10 @@ class CloudStackDriver < BurstingDriver
     }
     
     args.concat(" ")
-    args.concat("displayname=one-#{vmid}")
+    args.concat("displayname=one-#{vm_id}")
     
     begin
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{args}")
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
       
       raise "Error creating the instance" if !rc
     rescue => e
@@ -128,13 +128,15 @@ class CloudStackDriver < BurstingDriver
   
   def destroy_instance(deploy_id)
     
-    command = self.class::PUBLIC_CMD[:delete][:cmd]
+    cmd    = self.class::PUBLIC_CMD[:delete][:cmd]
+    subcmd = self.class::PUBLIC_CMD[:delete][:subcmd]
+    
     args = "id=#{deploy_id}"
     
     vm = get_instance(deploy_id)
   
     begin
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{command} #{args}")
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
       
       raise "Instance #{id} does not exist" if !rc
       
@@ -150,7 +152,7 @@ class CloudStackDriver < BurstingDriver
 
     rescue => e
       STDERR.puts e.message
-        exit(-1)
+      exit(-1)
     end
 
     return info
@@ -169,10 +171,11 @@ class CloudStackDriver < BurstingDriver
       raise "Instance #{id} does not exist" if !rc
     rescue => e
       STDERR.puts e.message
-        exit(-1)
+      exit(-1)
     end
-
-    return info
+    
+    instance = JSON.parse(info)
+    return instance['virtualmachine'][0]
   end
 
   def monitor_all_vms(host_id)
@@ -205,7 +208,7 @@ class CloudStackDriver < BurstingDriver
     rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd}")
     
     if !info.empty?
-      instance = JSON.parse(info) if !info.empty?
+      instance = JSON.parse(info)
     
       # For each instance 'virtualmachine'
       instance['virtualmachine'].each { |vm|
@@ -227,7 +230,7 @@ class CloudStackDriver < BurstingDriver
     puts vms_info
   end
 
-  def parse_poll(instance)
+  def parse_poll(vm)
     
     begin
       info =  "#{POLL_ATTRIBUTE[:usedmemory]}=0 " \
@@ -236,13 +239,13 @@ class CloudStackDriver < BurstingDriver
               "#{POLL_ATTRIBUTE[:netrx]}=0 "
 
       state = ""
-      if !instance
+      if !vm
         state = VM_STATE[:deleted]
       else
-        state = case instance['state']
-        when "RUNNING", "STARTING"
+        state = case vm['state']
+        when "Running", "Starting"
           VM_STATE[:active]
-        when "SUSPENDED", "STOPPING", 
+        when "Suspended", "Stopping", 
           VM_STATE[:paused]
         else
           VM_STATE[:deleted]
@@ -251,7 +254,7 @@ class CloudStackDriver < BurstingDriver
     
       info << "#{POLL_ATTRIBUTE[:state]}=#{state} "
     
-      # search for the value(s) corresponding to the DRV_POLL_ATTRS keys
+      # Search for the value(s) corresponding to the DRV_POLL_ATTRS keys
       DRV_POLL_ATTRS.map { |key, value|
         results = JsonPath.on(vm, "$..#{key}")
         if results.length > 0
@@ -264,6 +267,7 @@ class CloudStackDriver < BurstingDriver
     rescue
       # Unkown state if exception occurs retrieving information from
       # an instance
+      STDERR.puts e.message
       "#{POLL_ATTRIBUTE[:state]}=#{VM_STATE[:unknown]} "
     end
   end
