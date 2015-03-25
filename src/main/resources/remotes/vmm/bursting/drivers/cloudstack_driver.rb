@@ -16,8 +16,6 @@
 # -------------------------------------------------------------------------- #
 
 require 'drivers/bursting_driver'
-require 'jsonpath'
-require 'uri'
 
 include REXML
 
@@ -46,6 +44,11 @@ class CloudStackDriver < BurstingDriver
     :get => {
       :cmd    => :list,
       :subcmd => :virtualmachines,
+      :args => {
+        "ID" => {
+          :opt => 'id'
+        },
+      },
     },
     :delete => {
       :cmd => :destroy,
@@ -53,6 +56,15 @@ class CloudStackDriver < BurstingDriver
       :args => {
         "ID" => {
           :opt => 'id'
+        },
+      },
+    },
+    :job => {
+      :cmd => :query,
+      :subcmd => :asyncjobresult,
+      :args => {
+        "ID" => {
+          :opt => 'jobid'
         },
       },
     },
@@ -93,7 +105,6 @@ class CloudStackDriver < BurstingDriver
     
     cmd    = self.class::PUBLIC_CMD[:run][:cmd]
     subcmd = self.class::PUBLIC_CMD[:run][:subcmd]
-    
     args = ""
 
     opts.each {|k,v|
@@ -105,33 +116,55 @@ class CloudStackDriver < BurstingDriver
     args.concat("displayname=one-#{vm_id}")
     
     begin
+      # Asynchronous call
+      # This implies asyncblock = false in the cloudmonkey configuration
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
       
       raise "Error creating the instance" if !rc
     rescue => e
       STDERR.puts e.message
-        exit(-1)
+      exit(-1)
     end
+
+    # Polling until the 'key' is available (i.e., we have information about the 
+    # ipaddresses)
+    jobid = JsonPath.on(info, "$..jobid")
+    
+    key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
+    
+    cmd    = self.class::PUBLIC_CMD[:job][:cmd]
+    subcmd = self.class::PUBLIC_CMD[:job][:subcmd]
+    args   = "#{self.class::PUBLIC_CMD[:job][:args]["ID"][:opt]}=#{jobid}"
+    
+    begin
+      
+      sleep(1)
+      
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
+      raise "Error getting information from the instance" if !rc
+      
+      privateaddresses = JsonPath.on(info, "$..#{key}")
+      
+    rescue => e
+      STDERR.puts e.message
+      exit(-1)
+    end while (privateaddresses.length == 0)
     
     # The context_id is one of the privateaddresses.
     # The safest solution is to create a context for all the privateaddresses 
-    # associated to the vm.
-    key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
-    privateaddresses = JsonPath.on(info, "$..#{key}")
-    
+    # associated to the vm.    
     privateaddresses.each { |privateaddress|
       create_context(context_xml, privateaddress.gsub(".", "-"))
     }
 
-    return JsonPath.on(info, "$..displayname")[0]
+    return JsonPath.on(info, "$..virtualmachine.id")[0]
   end
   
   def destroy_instance(deploy_id)
     
     cmd    = self.class::PUBLIC_CMD[:delete][:cmd]
     subcmd = self.class::PUBLIC_CMD[:delete][:subcmd]
-    
-    args = "id=#{deploy_id}"
+    args   = "#{self.class::PUBLIC_CMD[:delete][:args]["ID"][:opt]}=#{deploy_id}"
     
     vm = get_instance(deploy_id)
   
@@ -162,9 +195,8 @@ class CloudStackDriver < BurstingDriver
     
     cmd    = self.class::PUBLIC_CMD[:get][:cmd]
     subcmd = self.class::PUBLIC_CMD[:get][:subcmd]
+    args   = "#{self.class::PUBLIC_CMD[:delete][:args]["ID"][:opt]}=#{deploy_id}"
     
-    args = "id=#{deploy_id}"
-
     begin
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
       

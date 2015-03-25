@@ -29,6 +29,7 @@ require 'yaml'
 require 'rubygems'
 require 'uri'
 require 'json'
+require 'jsonpath'
 
 $: << RUBY_LIB_LOCATION
 
