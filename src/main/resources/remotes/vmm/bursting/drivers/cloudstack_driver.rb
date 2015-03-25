@@ -67,15 +67,6 @@ class CloudStackDriver < BurstingDriver
           :opt => 'jobid'
         },
       },
-    },
-    :reboot => {
-      :cmd => :reboot
-    },
-    :stop => {
-      :cmd => :stop
-    },
-    :start => {
-      :cmd => :start
     }
   }
 
@@ -244,15 +235,18 @@ class CloudStackDriver < BurstingDriver
     
       # For each instance 'virtualmachine'
       instance['virtualmachine'].each { |vm|
-        next if vm["state"] != :pending && vm["state"] != :running
+        next if vm["state"] != "Running" && vm["state"] != "Starting"
         
         poll_data = parse_poll(vm)
         
-        deploy_id = vm["displayname"]
-        vm_id = deploy_id.match(/one-(.*)/)[1]
+        displayname = vm["displayname"]
+        id = vm["id"]
+        
+        one_id = displayname.match(/one-(.*)/)[1]
+        deploy_id = id
         
         vms_info << "VM=[\n"
-                  vms_info << "  ID=#{vm_id || -1},\n"
+                  vms_info << "  ID=#{one_id || -1},\n"
                   vms_info << "  DEPLOY_ID=#{deploy_id},\n"
                   vms_info << "  POLL=\"#{poll_data}\" ]\n"
       }
