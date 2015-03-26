@@ -82,6 +82,7 @@
 						</mapping>
 						<mapping>
 							<directory>/etc/one/</directory>
+							<configuration>noreplace</configuration>
 							<username>root</username>
 							<sources>
 								<source>
