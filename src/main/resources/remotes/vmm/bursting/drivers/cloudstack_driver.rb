@@ -24,7 +24,7 @@ class CloudStackDriver < BurstingDriver
   DRIVER_CONF    = "#{ETC_LOCATION}/cloudstack_driver.conf"
   DRIVER_DEFAULT = "#{ETC_LOCATION}/cloudstack_driver.default"
 
-  # Commands constants
+  # Public provider commands costants
   PUBLIC_CMD = {
     :run => {
       :cmd => :deploy,
@@ -151,6 +151,25 @@ class CloudStackDriver < BurstingDriver
     return JsonPath.on(info, "$..virtualmachine.id")[0]
   end
   
+  def get_instance(deploy_id)
+    
+    cmd    = self.class::PUBLIC_CMD[:get][:cmd]
+    subcmd = self.class::PUBLIC_CMD[:get][:subcmd]
+    args   = "#{self.class::PUBLIC_CMD[:delete][:args]["ID"][:opt]}=#{deploy_id}"
+    
+    begin
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
+      
+      raise "Instance #{id} does not exist" if !rc
+    rescue => e
+      STDERR.puts e.message
+      exit(-1)
+    end
+    
+    instance = JSON.parse(info)
+    return instance['virtualmachine'][0]
+  end
+  
   def destroy_instance(deploy_id)
     
     cmd    = self.class::PUBLIC_CMD[:delete][:cmd]
@@ -180,25 +199,6 @@ class CloudStackDriver < BurstingDriver
     end
 
     return info
-  end
-  
-  def get_instance(deploy_id)
-    
-    cmd    = self.class::PUBLIC_CMD[:get][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:get][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:delete][:args]["ID"][:opt]}=#{deploy_id}"
-    
-    begin
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-      
-      raise "Instance #{id} does not exist" if !rc
-    rescue => e
-      STDERR.puts e.message
-      exit(-1)
-    end
-    
-    instance = JSON.parse(info)
-    return instance['virtualmachine'][0]
   end
 
   def monitor_all_vms(host_id)

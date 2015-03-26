@@ -61,18 +61,19 @@ class BurstingDriver
   # Generic polling attributes
   POLL_ATTRS = {
     :privateaddresses => "PRIVATEADDRESSES",
-    :publicaddresses => "PUBLICADDRESSES"
+    :publicaddresses  => "PUBLICADDRESSES"
   }
 
-  # Child driver specific attributes  
+  # Child driver specific polling attributes  
   DRV_POLL_ATTRS = nil
 
   DRIVERS = {
-    :jclouds => 'jclouds',
-    :cloudstack  => 'cloudstack'
+    :jclouds    => 'jclouds',
+    :cloudstack => 'cloudstack'
   }
 
   def self.create(type,host)
+    
     case type
     when DRIVERS[:jclouds]
       JcloudsDriver.new(host)
@@ -87,6 +88,7 @@ class BurstingDriver
   # (it would be preferred through the ARGV arguments)
   # +vm_id+: String, representing the ID of the VM
   def self.get_type(vm_id)
+    
     type = ""
     client = Client.new()
 
@@ -104,6 +106,7 @@ class BurstingDriver
   # Constructor
   # +host+: String, representing the name of the host
   def initialize(host)
+    
     @host = host
     load_configuration
   end
@@ -113,11 +116,12 @@ class BurstingDriver
   # +host+: String, representing the name of the host
   # +xml_text+: String, containing VM information in XML format
   def deploy(vm_id, host, xml_text)
+    
     load_default_template_values
 
     info = get_deployment_info(host, xml_text)
 
-    #TODO Make an abstraction of the validation phase
+    # TODO Make an abstraction of the validation phase
     #if !value(info, 'IMAGEID')
     #  STDERR.puts("Cannot find IMAGEID in deployment file")
     #  exit(-1)
@@ -171,20 +175,47 @@ class BurstingDriver
   # +vm_id+: String, representing the VM ID
   # +deploy_id+: String, representing the VM deploy ID
   def poll(vm_id, deploy_id)
+    
     instance = get_instance(deploy_id)
     puts parse_poll(instance)
   end
 
   # Get the info of all instances.
   # +host_id+: String, representing the ID of the host
-  def monitor_all_vms(host_id); end
+  def monitor_all_vms(host_id)
+    raise "You should implement this method."
+  end
 
 private
+
+  # Create the instance on the Public Provider
+  def create_instance(vm_id, opts, context_xml)
+    raise "You should implement this method."
+  end
+
+  # Retrieve the instance information from the Public Provider
+  # +deploy_id+: String, representing the VM deploy ID
+  def get_instance(deploy_id)
+    raise "You should implement this method."
+  end
+
+  # Destroy the instance on the Public Provider
+  # +deploy_id+: String, VM deploy ID
+  def destroy_instance(deploy_id)
+    raise "You should implement this method."
+  end
+
+  # Parse the VM information from the instance info
+  # +instance_info+: String, instance information
+  def parse_poll(instance_info)
+    raise "You should implement this method."
+  end
 
   # Get the associated capacity of the instance_type as cpu (in 100 percent
   # e.g. 800 for 8 cores) and memory (in KB)
   # +name+: String, the instance type name
   def instance_type_capacity(name)
+    
     return 0, 0 if @instance_types[name].nil?
     return @instance_types[name]['cpu'].to_i * 100 ,
            @instance_types[name]['memory'].to_i * 1024 * 1024
@@ -195,6 +226,7 @@ private
   # +host+: String, representing the name of the host
   # +xml_text+: String, containing VM information in XML format
   def get_deployment_info(host, xml_text)
+    
     xml = REXML::Document.new xml_text
 
     public_cloud = nil
@@ -221,15 +253,17 @@ private
       end
     end
 
-    public_cloud
+    return public_cloud
   end 
 
   # Retrieve the context information 
   # +xml_text+: REXML Document, containing VM information
   def get_context_info(xml_text)
+    
     xml = REXML::Document.new xml_text
-
     context = xml.root.get_elements("//CONTEXT")
+    
+    return context
   end
   
   # Create the context files in the local filesystem
@@ -237,6 +271,7 @@ private
   # +vm_id+: String, context ID (typically a representation of the VM's IP)
   # +context_path+: String, path of the context on the local filesysem
   def create_context(context_xml, context_id)
+    
     context_dir = @context_path + '/' + context_id + '/context'
     
     # Creating context directory      
@@ -284,8 +319,8 @@ private
   # Remove the context files from the local filesystem
   # +vm_id+: String, context ID (typically a representation of the VM's IP)
   def remove_context(context_id)
-    context_dir = @context_path + '/' + context_id
     
+    context_dir = @context_path + '/' + context_id
     FileUtils.rm_rf context_dir if File.directory?(context_dir)
   end
 
@@ -296,6 +331,7 @@ private
   # +xml+: REXML Document, containing Public Cloud information
   # +extra_params+: Array, containing extra parameters to add
   def generate_options(action, xml, extra_params={})
+    
     opts = extra_params || {}
 
     if self.class::PUBLIC_CMD[action][:args]
@@ -323,6 +359,7 @@ private
   # +name+: String, xpath expression to retrieve the value
   # +block+: Block, block to be applied to the value before returning it
   def value(xml, name, &block)
+    
     value = value_from_xml(xml, name) || @defaults[name]
     if block_given? && value
       block.call(value)
@@ -335,6 +372,7 @@ private
   # +xml+: REXML Document
   # +name+: String, element name
   def value_from_xml(xml, name)
+    
     if xml
       element = xml.elements[name]
       element.text.strip if element && element.text
@@ -343,12 +381,13 @@ private
   
   # Load the provider configuration values
   def load_configuration
-    @public_cloud_conf  = YAML::load(File.read(self.class::DRIVER_CONF))
+    @public_cloud_conf = YAML::load(File.read(self.class::DRIVER_CONF))
   end
 
   # Load the default values that will be used to create a new instance, if
   # not provided in the template.
   def load_default_template_values
+    
     @defaults = Hash.new
 
     if File.exists?(DRIVER_DEFAULT)
@@ -370,29 +409,6 @@ private
         end
       }
     end
-  end
-    
-  # Create the instance on the Public Provider
-  def create_instance(vm_id, opts, context_xml)
-    raise "You should implement this method."
-  end
-
-  # Retrieve the instance information from the Public Provider
-  # +deploy_id+: String, representing the VM deploy ID
-  def get_instance(deploy_id)
-    raise "You should implement this method."
-  end
-  
-  # Destroy the instance on the Public Provider
-  # +deploy_id+: String, VM deploy ID
-  def destroy_instance(deploy_id)
-    raise "You should implement this method."
-  end
-  
-  # Parse the VM information from the instance info
-  # +instance_info+: String, instance information
-  def parse_poll(instance_info)
-    raise "You should implement this method."
   end
   
 end
