@@ -94,7 +94,7 @@ class JcloudsDriver < BurstingDriver
     @common_args.concat(" --credential #{@host['credential']}")
   end
 
-  def create_instance(opts, context_xml)
+  def create_instance(vm_id, opts, context_xml)
     command = self.class::PUBLIC_CMD[:run][:cmd]
     
     args = @common_args.clone
@@ -116,7 +116,7 @@ class JcloudsDriver < BurstingDriver
     # TODO manage the case of multiple addresses
     context_id = JSON.parse(info)['privateAddresses'].gsub(".", "-")
     
-    create_context(context_xml, context_id, @context_path)
+    create_context(context_xml, context_id)
 
     return JSON.parse(info)['id']
   end
@@ -158,7 +158,7 @@ class JcloudsDriver < BurstingDriver
       
       raise "Instance #{id} does not exist" if !rc
       
-      remove_context(context_id, @context_path)
+      remove_context(context_id)
       
     rescue => e
       STDERR.puts e.message

@@ -13,7 +13,7 @@
 	<packaging>rpm</packaging>
 	<name>cloud-bursting4one</name>
 	<description>Cloud bursting driver for OpenNebula</description>
-	<version>0.1.2</version>
+	<version>0.1.3</version>
 	
 	<properties>
 		<site>default</site>
@@ -82,6 +82,7 @@
 						</mapping>
 						<mapping>
 							<directory>/etc/one/</directory>
+							<configuration>noreplace</configuration>
 							<username>root</username>
 							<sources>
 								<source>
