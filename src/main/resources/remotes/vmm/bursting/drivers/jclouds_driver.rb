@@ -147,7 +147,7 @@ class JcloudsDriver < BurstingDriver
     info = get_instance(deploy_id)
     
     # TODO manage the case of multiple addresses
-    context_id = JSON.parse(info)['publicAddresses'].gsub(".", "-")
+    context_id = JSON.parse(info)['privateAddresses'].gsub(".", "-")
     
     args = @common_args.clone
     
