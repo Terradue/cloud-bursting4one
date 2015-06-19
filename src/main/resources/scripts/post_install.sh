@@ -24,4 +24,6 @@ do
     fi
 done
 
+echo "Post-install done."
+
 exit 0
