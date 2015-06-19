@@ -8,20 +8,12 @@ do
     # vmm
     src="${prefix}/vmm/bursting"
     dest="${prefix}/vmm/${driver}"
-    
-    if [[ ! -h "${dest}" ]]
-    then
-      ln -s ${src} ${dest}
-    fi
+    ln -s ${src} ${dest}
     
     # im
     src="${prefix}/im/bursting.d"
     dest="${prefix}/im/${driver}.d"
-    
-    if [[ ! -h "${dest}" ]]
-    then
-      ln -s ${src} ${dest}
-    fi
+    ln -s ${src} ${dest}
 done
 
 exit 0

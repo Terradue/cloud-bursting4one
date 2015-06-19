@@ -88,6 +88,8 @@ class JcloudsDriver < BurstingDriver
     hosts = @public_cloud_conf['hosts']
     @host = hosts[host] || hosts["default"]
     
+    @context_path.concat("/#{@host['provider']}/")
+    
     @common_args = ""
     @common_args.concat(" --provider #{@host['provider']}")
     @common_args.concat(" --identity #{@host['identity']}")
@@ -147,7 +149,7 @@ class JcloudsDriver < BurstingDriver
     info = get_instance(deploy_id)
     
     # TODO manage the case of multiple addresses
-    context_id = JSON.parse(info)['publicAddresses'].gsub(".", "-")
+    context_id = JSON.parse(info)['privateAddresses'].gsub(".", "-")
     
     args = @common_args.clone
     
