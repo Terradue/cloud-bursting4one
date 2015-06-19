@@ -89,6 +89,8 @@ class CloudStackDriver < BurstingDriver
     hosts = @public_cloud_conf['hosts']
     @host = hosts[host] || hosts["default"]
     
+    @context_path.concat("/#{@host['provider']}/")
+    
     @auth = "-c #{@host['config_file']}"
   end
 
