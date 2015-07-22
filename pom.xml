@@ -1,127 +1,147 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>com.terradue</groupId>
-		<artifactId>t2-parent</artifactId>
-		<version>14</version>
-	</parent>
+  <parent>
+    <groupId>com.terradue</groupId>
+    <artifactId>t2-parent</artifactId>
+    <version>14</version>
+  </parent>
 
-	<groupId>com.terradue</groupId>
-	<artifactId>cloud-bursting4one</artifactId>
-	<packaging>rpm</packaging>
-	<name>cloud-bursting4one</name>
-	<description>Cloud bursting driver for OpenNebula</description>
-	<version>0.1.5-SNAPSHOT</version>
-	
-	<properties>
-		<site>default</site>
-		<redmine.projectID>cloud-bursting4one</redmine.projectID>
-		<jclouds.version>1.8.1</jclouds.version>
-	</properties>
-	
-	<scm>
-		<connection>scm:git:git@github.com:Terradue/cloud-bursting4one.git</connection>
-		<developerConnection>scm:git:git@github.com:Terradue/cloud-bursting4one.git</developerConnection>
-		<url>https://github.com/Terradue/cloud-bursting4one.git</url>
-		<tag>HEAD</tag>
-	</scm>
+  <groupId>com.terradue</groupId>
+  <artifactId>cloud-bursting4one</artifactId>
+  <packaging>rpm</packaging>
+  <name>cloud-bursting4one</name>
+  <description>Cloud bursting driver for OpenNebula</description>
+  <version>0.1.5-SNAPSHOT</version>
+        
+  <properties>
+    <site>default</site>
+    <redmine.projectID>cloud-bursting4one</redmine.projectID>
+  </properties>
+        
+  <pluginRepositories>
+    <pluginRepository>
+      <snapshots />
+      <id>repository.terradue.com</id>
+      <name>repository.terradue.com-releases</name>
+      <url>http://repository.terradue.com/artifactory/libs-release-public</url>
+    </pluginRepository>
+  </pluginRepositories>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<snapshots />
-			<id>repository.terradue.com</id>
-			<name>repository.terradue.com-releases</name>
-			<url>http://repository.terradue.com/artifactory/libs-release-public</url>
-		</pluginRepository>
-	</pluginRepositories>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>rpm-maven-plugin</artifactId>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <id>generate-rpm</id>
+            <goals><goal>rpm</goal></goals>
+            <phase>prepare-package</phase>
+          </execution>
+        </executions>   
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>rpm-maven-plugin</artifactId>
-				<extensions>true</extensions>
-				<executions>
-			    		<execution>
-						<id>generate-rpm</id>
-						<goals><goal>rpm</goal></goals>
-						<phase>prepare-package</phase>
-					</execution>
-				</executions>	
-
-				<configuration>
-					<copyright>${project.inceptionYear}, Terradue, GPL</copyright>
-					<distribution>Terradue ${project.inceptionYear}</distribution>
-					<group>infra</group>
-					<packager>Terradue</packager>
-					<name>${project.artifactId}</name>
-					<defaultDirmode>750</defaultDirmode>
-					<defaultFilemode>755</defaultFilemode>
-					<defaultUsername>oneadmin</defaultUsername>
-					<defaultGroupname>oneadmin</defaultGroupname>
-					<autoRequires>true</autoRequires>
-					<description>Cloud bursting driver for OpenNebula</description>
-					<mappings>
-						<mapping>
-							<directory>/var/lib/one/remotes/vmm/bursting</directory>
-							<sources>
-								<source>
-									<location>${basedir}/src/main/resources/remotes/vmm/bursting</location>
-								</source>
-							</sources>
-						</mapping>
-						<mapping>
-							<directory>/var/lib/one/remotes/im/bursting.d</directory>
-							<sources>
-								<source>
-									<location>${basedir}/src/main/resources/remotes/im/bursting.d</location>
-								</source>
-							</sources>
-						</mapping>
-						<mapping>
-							<directory>/etc/one/</directory>
-							<configuration>noreplace</configuration>
-							<username>root</username>
-							<sources>
-								<source>
-									<location>${basedir}/src/main/resources/etc/</location>
-								</source>
-							</sources>
-						</mapping>
-					</mappings>
-					<postinstallScriptlet>
-						<scriptFile>${basedir}/src/main/resources/scripts/post_install.sh</scriptFile>
-						<fileEncoding>utf-8</fileEncoding>
-					</postinstallScriptlet>
-					<postremoveScriptlet>
-						<scriptFile>${basedir}/src/main/resources/scripts/post_remove.sh</scriptFile>
-						<fileEncoding>utf-8</fileEncoding>
-					</postremoveScriptlet>
-					<provides>
-						<provide>${project.artifactId}</provide>
-					</provides>
-	  			<requires>
-						<require>opennebula &gt;= 4.4</require>
-						<require>jclouds-cli</require>
-					</requires>
-					<needarch>noarch</needarch>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.nuiton.jredmine</groupId>
-				<artifactId>jredmine-maven-plugin</artifactId>
-				<inherited>false</inherited>
-			</plugin>
-
-			<plugin>
-				<groupId>com.terradue</groupId>
-				<artifactId>rpmdeploy-maven-plugin</artifactId>
-			</plugin>
-
-		</plugins>
-	</build>
-
+        <configuration>
+          <copyright>${project.inceptionYear}, Terradue, GPL</copyright>
+          <distribution>Terradue ${project.inceptionYear}</distribution>
+          <group>infra</group>
+          <packager>Terradue</packager>
+          <name>${project.artifactId}</name>
+          <defaultDirmode>750</defaultDirmode>
+          <defaultFilemode>755</defaultFilemode>
+          <defaultUsername>oneadmin</defaultUsername>
+          <defaultGroupname>oneadmin</defaultGroupname>
+          <autoRequires>true</autoRequires>
+          <description>Cloud bursting driver for OpenNebula</description>
+          <mappings>
+            <mapping>
+              <directory>/var/lib/one/remotes/vmm/bursting</directory>
+              <sources>
+                <source>
+                  <location>${basedir}/src/main/resources/remotes/vmm/bursting</location>
+                </source>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/var/lib/one/remotes/im/bursting.d</directory>
+              <sources>
+                <source>
+                  <location>${basedir}/src/main/resources/remotes/im/bursting.d</location>
+                </source>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/var/lib/one/remotes/vmm/jclouds</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/vmm/bursting</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/var/lib/one/remotes/vmm/cloudstack</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/vmm/bursting</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/var/lib/one/remotes/im/jclouds.d</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/im/bursting.d</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/var/lib/one/remotes/im/cloudstack.d</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/im/bursting.d</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/etc/one/</directory>
+              <configuration>noreplace</configuration>
+              <username>root</username>
+              <sources>
+                <source>
+                  <location>${basedir}/src/main/resources/etc/</location>
+                </source>
+              </sources>
+            </mapping>
+          </mappings>
+          <provides>
+            <provide>${project.artifactId}</provide>
+          </provides>
+          <requires>
+            <require>opennebula &gt;= 4.4</require>
+            <require>jclouds-cli</require>
+            <require>python-setuptools</require>
+          </requires>
+          <needarch>noarch</needarch>
+          <postinstallScriptlet>
+            <scriptFile>${basedir}/src/main/resources/scripts/post_install.sh</scriptFile>
+            <fileEncoding>utf-8</fileEncoding>
+          </postinstallScriptlet>
+        </configuration>
+      </plugin>
+      
+      <plugin>
+        <groupId>org.nuiton.jredmine</groupId>
+        <artifactId>jredmine-maven-plugin</artifactId>
+        <inherited>false</inherited>
+      </plugin>
+      
+      <plugin>
+        <groupId>com.terradue</groupId>
+        <artifactId>rpmdeploy-maven-plugin</artifactId>
+      </plugin>
+      
+    </plugins>
+  </build>
 </project>
