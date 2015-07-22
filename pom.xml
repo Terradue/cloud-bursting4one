@@ -122,7 +122,7 @@
             <require>opennebula &gt;= 4.4</require>
             <require>jclouds-cli</require>
             <require>python-setuptools</require>
-            <require>ruby == 1.8.7</require>
+            <require>ruby &gt;= 1.8.7</require>
           </requires>
           <needarch>noarch</needarch>
           <postinstallScriptlet>
