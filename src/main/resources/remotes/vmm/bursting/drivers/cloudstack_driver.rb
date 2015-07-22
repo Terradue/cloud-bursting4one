@@ -244,11 +244,14 @@ class CloudStackDriver < BurstingDriver
         displayname = vm["displayname"]
         id = vm["id"]
         
-        one_id = displayname.match(/one-(.*)/)[1]
+        one_id = displayname.match(/one-(.*)/)
+        
+        next if one_id.nil?
+        
         deploy_id = id
         
         vms_info << "VM=[\n"
-                  vms_info << "  ID=#{one_id || -1},\n"
+                  vms_info << "  ID=#{one_id[1] || -1},\n"
                   vms_info << "  DEPLOY_ID=#{deploy_id},\n"
                   vms_info << "  POLL=\"#{poll_data}\" ]\n"
       }
