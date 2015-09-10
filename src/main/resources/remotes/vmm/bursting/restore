@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 
 # -------------------------------------------------------------------------- #
 # Copyright 2015, Terradue S.r.l.                                            #
@@ -14,7 +14,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
 # See the License for the specific language governing permissions and        #
 # limitations under the License.                                             #
-#--------------------------------------------------------------------------- #
+# -------------------------------------------------------------------------- #
 
-SCRIPT_NAME=$(basename $0)
-echo "Action $SCRIPT_NAME not supported" 1>&2
+$: << File.dirname(__FILE__)
+
+require 'bursting'
+
+deploy_id = ARGV[0]
+host      = ARGV[1]
+vm_id     = ARGV[2]
+
+type = BurstingDriver.get_type(vm_id)
+
+drv = BurstingDriver.create(type,host)
+
+drv.restore(deploy_id)
