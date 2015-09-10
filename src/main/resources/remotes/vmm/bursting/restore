@@ -20,9 +20,9 @@ $: << File.dirname(__FILE__)
 
 require 'bursting'
 
-deploy_id = ARGV[0]
+deploy_id = ARGV[2]
 host      = ARGV[1]
-vm_id     = ARGV[2]
+vm_id     = ARGV[3]
 
 type = BurstingDriver.get_type(vm_id)
 

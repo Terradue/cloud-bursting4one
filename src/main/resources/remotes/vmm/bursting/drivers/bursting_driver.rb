@@ -161,7 +161,7 @@ class BurstingDriver
 
   # Stop an instance
   # +deploy_id+: String, representing the VM deploy ID
-  def eave(deploy_id)
+  def save(deploy_id)
     save_instance(deploy_id)
   end
 

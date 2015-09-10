@@ -23,8 +23,6 @@ class CloudStackDriver < BurstingDriver
 
   DRIVER_CONF    = "#{ETC_LOCATION}/cloudstack_driver.conf"
   DRIVER_DEFAULT = "#{ETC_LOCATION}/cloudstack_driver.default"
-  
-  TIMEOUT_SECONDS = 600
 
   # Public provider commands costants
   PUBLIC_CMD = {
@@ -58,6 +56,9 @@ class CloudStackDriver < BurstingDriver
       :args => {
         "ID" => {
           :opt => 'id'
+        },
+        "EXPUNGE" => {
+          :opt => 'expunge'
         },
       },
     },
@@ -201,13 +202,14 @@ class CloudStackDriver < BurstingDriver
     subcmd = self.class::PUBLIC_CMD[:delete][:subcmd]
     args   = "#{self.class::PUBLIC_CMD[:delete][:args]["ID"][:opt]}=#{deploy_id}"
     
+    args.concat(" ")
+    args.concat("#{self.class::PUBLIC_CMD[:delete][:args]["EXPUNGE"][:opt]}=True")
+    
     vm = get_instance(deploy_id)
   
-    Timeout::timeout(TIMEOUT_SECONDS) do
-      begin
-        rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-      end while !rc 
-    end
+    begin
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
+    end while !rc 
     
     # The context_id is one of the privateaddresses.
     # The safest solution is to check and remove all the privateaddresses 
