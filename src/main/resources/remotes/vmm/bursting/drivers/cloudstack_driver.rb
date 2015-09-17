@@ -57,6 +57,36 @@ class CloudStackDriver < BurstingDriver
         "ID" => {
           :opt => 'id'
         },
+        "EXPUNGE" => {
+          :opt => 'expunge'
+        },
+      },
+    },
+    :reboot => {
+      :cmd => :reboot,
+      :subcmd => :virtualmachine,
+      :args => {
+        "ID" => {
+          :opt => 'id'
+        },
+      },
+    },
+    :save => {
+      :cmd => :stop,
+      :subcmd => :virtualmachine,
+      :args => {
+        "ID" => {
+          :opt => 'id'
+        },
+      },
+    },
+    :resume => {
+      :cmd => :start,
+      :subcmd => :virtualmachine,
+      :args => {
+        "ID" => {
+          :opt => 'id'
+        },
       },
     },
     :job => {
@@ -130,17 +160,11 @@ class CloudStackDriver < BurstingDriver
     args   = "#{self.class::PUBLIC_CMD[:job][:args]["ID"][:opt]}=#{jobid}"
     
     begin
-      
+
       sleep(1)
-      
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-      raise "Error getting information from the instance" if !rc
-      
       privateaddresses = JsonPath.on(info, "$..#{key}")
-      
-    rescue => e
-      STDERR.puts e.message
-      exit(-1)
+
     end while (privateaddresses.length == 0)
     
     # The context_id is one of the privateaddresses.
@@ -178,27 +202,63 @@ class CloudStackDriver < BurstingDriver
     subcmd = self.class::PUBLIC_CMD[:delete][:subcmd]
     args   = "#{self.class::PUBLIC_CMD[:delete][:args]["ID"][:opt]}=#{deploy_id}"
     
+    args.concat(" ")
+    args.concat("#{self.class::PUBLIC_CMD[:delete][:args]["EXPUNGE"][:opt]}=True")
+    
     vm = get_instance(deploy_id)
   
     begin
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-      
-      raise "Instance #{id} does not exist" if !rc
-      
-      # The context_id is one of the privateaddresses.
-      # The safest solution is to check and remove all the privateaddresses 
-      # associated to the vm.    
-      key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
-      privateaddresses = JsonPath.on(vm, "$..#{key}")
-      
-      privateaddresses.each { |privateaddress|
-        remove_context(privateaddress.gsub(".", "-"))
-      }
+    end while !rc 
+    
+    # The context_id is one of the privateaddresses.
+    # The safest solution is to check and remove all the privateaddresses 
+    # associated to the vm.    
+    key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
+    privateaddresses = JsonPath.on(vm, "$..#{key}")
+    
+    privateaddresses.each { |privateaddress|
+      remove_context(privateaddress.gsub(".", "-"))
+    }
 
-    rescue => e
-      STDERR.puts e.message
-      exit(-1)
-    end
+    return info
+  end
+  
+  def reboot_instance(deploy_id)
+    
+    cmd    = self.class::PUBLIC_CMD[:reboot][:cmd]
+    subcmd = self.class::PUBLIC_CMD[:reboot][:subcmd]
+    args   = "#{self.class::PUBLIC_CMD[:reboot][:args]["ID"][:opt]}=#{deploy_id}"
+  
+    begin
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
+    end while !rc 
+
+    return info
+  end
+  
+  def save_instance(deploy_id)
+    
+    cmd    = self.class::PUBLIC_CMD[:save][:cmd]
+    subcmd = self.class::PUBLIC_CMD[:save][:subcmd]
+    args   = "#{self.class::PUBLIC_CMD[:save][:args]["ID"][:opt]}=#{deploy_id}"
+  
+    begin
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
+    end while !rc
+
+    return info
+  end
+  
+  def resume_instance(deploy_id)
+    
+    cmd    = self.class::PUBLIC_CMD[:resume][:cmd]
+    subcmd = self.class::PUBLIC_CMD[:resume][:subcmd]
+    args   = "#{self.class::PUBLIC_CMD[:resume][:args]["ID"][:opt]}=#{deploy_id}"
+  
+    begin
+      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
+    end while !rc 
 
     return info
   end

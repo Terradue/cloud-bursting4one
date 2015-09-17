@@ -150,7 +150,7 @@ class BurstingDriver
   # Reboot an instance
   # +deploy_id+: String, representing the VM deploy ID
   def reboot(deploy_id)
-    action(deploy_id, :reboot)
+    reboot_instance(deploy_id)
   end
 
   # Cancel an instance
@@ -162,13 +162,13 @@ class BurstingDriver
   # Stop an instance
   # +deploy_id+: String, representing the VM deploy ID
   def save(deploy_id)
-    action(deploy_id, :shutdown)
+    save_instance(deploy_id)
   end
 
-  # Cancel an  instance
+  # Resume an  instance
   # +deploy_id+: String, representing the VM deploy ID
   def restore(deploy_id)
-    action(deploy_id, :start)
+    resume_instance(deploy_id)
   end
 
   # Get info for an instance
@@ -202,6 +202,24 @@ private
   # Destroy the instance on the Public Provider
   # +deploy_id+: String, VM deploy ID
   def destroy_instance(deploy_id)
+    raise "You should implement this method."
+  end
+  
+  # Reboot the instance on the Public Provider
+  # +deploy_id+: String, VM deploy ID
+  def reboot_instance(deploy_id)
+    raise "You should implement this method."
+  end
+  
+  # Save the instance on the Public Provider
+  # +deploy_id+: String, VM deploy ID
+  def save_instance(deploy_id)
+    raise "You should implement this method."
+  end
+  
+  # Resume the instance on the Public Provider
+  # +deploy_id+: String, VM deploy ID
+  def resume_instance(deploy_id)
     raise "You should implement this method."
   end
 
