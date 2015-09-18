@@ -174,7 +174,8 @@ class CloudStackDriver < BurstingDriver
       create_context(context_xml, privateaddress.gsub(".", "-"))
     }
 
-    return JsonPath.on(info, "$..virtualmachine.id")[0]
+    vm_id = JsonPath.on(info, "$..virtualmachine.id")[0]
+    return vm_id
   end
   
   def get_instance(deploy_id)
