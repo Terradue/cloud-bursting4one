@@ -152,6 +152,13 @@ class CloudStackDriver < BurstingDriver
       STDERR.puts e.message
       exit(-1)
     end
+    
+    # Removing spurious chars from the command output
+    info.gsub!("\r","")
+    info.gsub!("\\ ","")
+    info.gsub!("\/ ","")
+    info.gsub!("\| ","")
+    info.gsub!("\- ","")
 
     log("#{LOG_LOCATION}/#{vm_id}.log","deploy","API Info: #{info}")
     
