@@ -166,6 +166,19 @@ class CloudStackDriver < BurstingDriver
     
     log("#{LOG_LOCATION}/#{vm_id}.log","deploy","Deploy ID: #{deploy_id}")
     
+    # Create the context for the VM 
+    privateaddresses_attr = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
+    privateaddresses = JsonPath.on(info, "$..#{privateaddresses_attr}")
+    
+    unless privateaddresses.nil? || privateaddresses.length == 0
+      # The context_id is one of the privateaddresses.
+      # The safest solution is to create a context for all the
+      # privateaddresses associated to the vm.
+      privateaddresses.each { |privateaddress|
+        create_context(context_xml, privateaddress.gsub(".", "-"))
+      }
+    end
+    
     return deploy_id
   end
   
@@ -305,21 +318,7 @@ class CloudStackDriver < BurstingDriver
         vms_info << "VM=[\n"
                   vms_info << "  ID=#{one_id[1] || -1},\n"
                   vms_info << "  DEPLOY_ID=#{deploy_id},\n"
-                  vms_info << "  POLL=\"#{poll_data}\" ]\n"
-                  
-        
-        # Create the context for the VM 
-        privateaddresses_attr = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
-        privateaddresses = JsonPath.on(vm, "$..#{privateaddresses_attr}")
-        
-        if privateaddresses.length > 0
-          # The context_id is one of the privateaddresses.
-          # The safest solution is to create a context for all the
-          # privateaddresses associated to the vm.
-          privateaddresses.each { |privateaddress|
-            create_context(context_xml, privateaddress.gsub(".", "-"))
-          }
-        end 
+                  vms_info << "  POLL=\"#{poll_data}\" ]\n" 
       }
     end
     
