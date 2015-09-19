@@ -138,9 +138,13 @@ class CloudStackDriver < BurstingDriver
     args.concat(" ")
     args.concat("displayname=one-#{vm_id}")
     
+    log("#{LOG_LOCATION}/#{vm_id}.log","deploy","Command:#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
+    
     begin
-      # Asynchronous call
-      # This implies asyncblock = false in the cloudmonkey configuration
+      # Synchronous call
+      # This implies asyncblock = true in the cloudmonkey configuration
+      # It is needed to avoid the RUNNING state before the instance is
+      # actualy Running.
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
       
       raise "Error creating the instance" if !rc
@@ -149,32 +153,8 @@ class CloudStackDriver < BurstingDriver
       exit(-1)
     end
 
-    # Polling until the 'key' is available (i.e., we have information about the 
-    # ipaddresses)
-    jobid = JsonPath.on(info, "$..jobid")
+    log("#{LOG_LOCATION}/#{vm_id}.log","deploy","API Info: #{info}")
     
-    key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
-    
-    cmd    = self.class::PUBLIC_CMD[:job][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:job][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:job][:args]["ID"][:opt]}=#{jobid}"
-    
-    begin
-
-      sleep(1)
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-      privateaddresses = JsonPath.on(info, "$..#{key}")
-
-    end while (privateaddresses.length == 0)
-    
-    # The context_id is one of the privateaddresses.
-    # The safest solution is to create a context for all the privateaddresses 
-    # associated to the vm.    
-    privateaddresses.each { |privateaddress|
-      create_context(context_xml, privateaddress.gsub(".", "-"))
-    }
-
-    vm_id = JsonPath.on(info, "$..virtualmachine.id")[0]
     return vm_id
   end
   
@@ -315,6 +295,20 @@ class CloudStackDriver < BurstingDriver
                   vms_info << "  ID=#{one_id[1] || -1},\n"
                   vms_info << "  DEPLOY_ID=#{deploy_id},\n"
                   vms_info << "  POLL=\"#{poll_data}\" ]\n"
+                  
+        
+        # Create the context for the VM 
+        privateaddresses_attr = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
+        privateaddresses = JsonPath.on(vm, "$..#{privateaddresses_attr}")
+        
+        if privateaddresses.length > 0
+          # The context_id is one of the privateaddresses.
+          # The safest solution is to create a context for all the
+          # privateaddresses associated to the vm.
+          privateaddresses.each { |privateaddress|
+            create_context(context_xml, privateaddress.gsub(".", "-"))
+          }
+        end 
       }
     end
     
@@ -376,6 +370,15 @@ private
       STDERR.puts("Error executing: #{cmd} err: #{rc.stderr} out: #{rc.stdout}")
       return [false, rc.code]
     end
+  end
+  
+  def log(file,action,text)
+
+    time = Time.now.strftime("%Y/%m/%d %H:%M")
+    open(file, 'a') { |f|
+      f.puts "[#{time}] [#{action}] #{text}"
+    }
+    
   end
 
 end
