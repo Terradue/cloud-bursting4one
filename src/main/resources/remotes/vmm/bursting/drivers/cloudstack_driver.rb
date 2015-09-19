@@ -155,14 +155,18 @@ class CloudStackDriver < BurstingDriver
 
     log("#{LOG_LOCATION}/#{vm_id}.log","deploy","API Info: #{info}")
     
-    return vm_id
+    deploy_id = JsonPath.on(info, "$..virtualmachine.id")[0]
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","deploy","Deploy ID: #{deploy_id}")
+    
+    return deploy_id
   end
   
   def get_instance(deploy_id)
     
     cmd    = self.class::PUBLIC_CMD[:get][:cmd]
     subcmd = self.class::PUBLIC_CMD[:get][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:delete][:args]["ID"][:opt]}=#{deploy_id}"
+    args   = "#{self.class::PUBLIC_CMD[:get][:args]["ID"][:opt]}=#{deploy_id}"
     
     begin
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
