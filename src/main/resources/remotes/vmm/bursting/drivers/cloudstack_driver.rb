@@ -138,9 +138,13 @@ class CloudStackDriver < BurstingDriver
     args.concat(" ")
     args.concat("displayname=one-#{vm_id}")
     
+    log("#{LOG_LOCATION}/#{vm_id}.log","deploy","Command:#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
+    
     begin
-      # Asynchronous call
-      # This implies asyncblock = false in the cloudmonkey configuration
+      # Synchronous call
+      # This implies asyncblock = true in the cloudmonkey configuration
+      # It is needed to avoid the RUNNING state before the instance is
+      # actualy Running.
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
       
       raise "Error creating the instance" if !rc
@@ -148,40 +152,41 @@ class CloudStackDriver < BurstingDriver
       STDERR.puts e.message
       exit(-1)
     end
-
-    # Polling until the 'key' is available (i.e., we have information about the 
-    # ipaddresses)
-    jobid = JsonPath.on(info, "$..jobid")
     
-    key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
-    
-    cmd    = self.class::PUBLIC_CMD[:job][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:job][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:job][:args]["ID"][:opt]}=#{jobid}"
-    
-    begin
+    # Removing spurious chars from the command output
+    info.gsub!("\r","")
+    info.gsub!("\\ ","")
+    info.gsub!("\/ ","")
+    info.gsub!("\| ","")
+    info.gsub!("\- ","")
 
-      sleep(1)
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-      privateaddresses = JsonPath.on(info, "$..#{key}")
-
-    end while (privateaddresses.length == 0)
+    log("#{LOG_LOCATION}/#{vm_id}.log","deploy","API Info: #{info}")
     
-    # The context_id is one of the privateaddresses.
-    # The safest solution is to create a context for all the privateaddresses 
-    # associated to the vm.    
-    privateaddresses.each { |privateaddress|
-      create_context(context_xml, privateaddress.gsub(".", "-"))
-    }
-
-    return JsonPath.on(info, "$..virtualmachine.id")[0]
+    deploy_id = JsonPath.on(info, "$..virtualmachine.id")[0]
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","deploy","Deploy ID: #{deploy_id}")
+    
+    # Create the context for the VM 
+    privateaddresses_attr = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
+    privateaddresses = JsonPath.on(info, "$..#{privateaddresses_attr}")
+    
+    unless privateaddresses.nil? || privateaddresses.length == 0
+      # The context_id is one of the privateaddresses.
+      # The safest solution is to create a context for all the
+      # privateaddresses associated to the vm.
+      privateaddresses.each { |privateaddress|
+        create_context(context_xml, privateaddress.gsub(".", "-"))
+      }
+    end
+    
+    return deploy_id
   end
   
   def get_instance(deploy_id)
     
     cmd    = self.class::PUBLIC_CMD[:get][:cmd]
     subcmd = self.class::PUBLIC_CMD[:get][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:delete][:args]["ID"][:opt]}=#{deploy_id}"
+    args   = "#{self.class::PUBLIC_CMD[:get][:args]["ID"][:opt]}=#{deploy_id}"
     
     begin
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
@@ -206,6 +211,10 @@ class CloudStackDriver < BurstingDriver
     args.concat("#{self.class::PUBLIC_CMD[:delete][:args]["EXPUNGE"][:opt]}=True")
     
     vm = get_instance(deploy_id)
+    
+    vm_id = vm["displayname"].match(/one-(.*)/)[1]
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","destroy","Command: #{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
   
     begin
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
@@ -221,6 +230,8 @@ class CloudStackDriver < BurstingDriver
       remove_context(privateaddress.gsub(".", "-"))
     }
 
+    log("#{LOG_LOCATION}/#{vm_id}.log","destroy","API Info: #{info}")
+    
     return info
   end
   
@@ -313,7 +324,7 @@ class CloudStackDriver < BurstingDriver
         vms_info << "VM=[\n"
                   vms_info << "  ID=#{one_id[1] || -1},\n"
                   vms_info << "  DEPLOY_ID=#{deploy_id},\n"
-                  vms_info << "  POLL=\"#{poll_data}\" ]\n"
+                  vms_info << "  POLL=\"#{poll_data}\" ]\n" 
       }
     end
     
@@ -375,6 +386,15 @@ private
       STDERR.puts("Error executing: #{cmd} err: #{rc.stderr} out: #{rc.stdout}")
       return [false, rc.code]
     end
+  end
+  
+  def log(file,action,text)
+
+    time = Time.now.strftime("%Y/%m/%d %H:%M")
+    open(file, 'a') { |f|
+      f.puts "[#{time}] [#{action}] #{text}"
+    }
+    
   end
 
 end

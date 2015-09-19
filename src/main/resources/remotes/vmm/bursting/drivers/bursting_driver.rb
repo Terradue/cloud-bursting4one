@@ -16,6 +16,7 @@
 # -------------------------------------------------------------------------- #
 
 ONE_LOCATION = ENV["ONE_LOCATION"] if !defined?(ONE_LOCATION)
+LOG_LOCATION = "/var/log/one/bursting"
 
 if !ONE_LOCATION
     RUBY_LIB_LOCATION = "/usr/lib/one/ruby" if !defined?(RUBY_LIB_LOCATION)
@@ -292,7 +293,10 @@ private
     
     context_dir = @context_path + '/' + context_id + '/context'
     
-    # Creating context directory      
+    # Already exists
+    return if File.directory?(context_dir)
+    
+    # Creating context directory
     FileUtils.mkdir_p context_dir
     
     tar_filename = 'context.tgz'
