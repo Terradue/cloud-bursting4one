@@ -211,6 +211,8 @@ class CloudStackDriver < BurstingDriver
     args.concat("#{self.class::PUBLIC_CMD[:delete][:args]["EXPUNGE"][:opt]}=True")
     
     vm = get_instance(deploy_id)
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","destroy","Command: #{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
   
     begin
       rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
@@ -226,6 +228,8 @@ class CloudStackDriver < BurstingDriver
       remove_context(privateaddress.gsub(".", "-"))
     }
 
+    log("#{LOG_LOCATION}/#{vm_id}.log","destroy","API Info: #{info}")
+    
     return info
   end
   
