@@ -212,6 +212,8 @@ class CloudStackDriver < BurstingDriver
     
     vm = get_instance(deploy_id)
     
+    vm_id = vm["displayname"].match(/one-(.*)/)[1]
+    
     log("#{LOG_LOCATION}/#{vm_id}.log","destroy","Command: #{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
   
     begin
