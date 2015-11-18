@@ -74,7 +74,7 @@ cp src/main/resources/etc/ ${ONE_CONF}
 
 # Configuration
 
-The cloud-bursting4one driver includes the following interfaces:
+The cloud-bursting4one driver includes the following APIs:
 
 * jclouds
 * cloudstack
