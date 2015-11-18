@@ -44,25 +44,33 @@ $ rpm -Uvh cloud-bursting4one.rpm
 
 To manually install the driver, you have to download the repository as a ZIP:
 
-  $ unzip cloud-bursting4one-master.zip
-  $ cd cloud-bursting4one
+```bash
+$ unzip cloud-bursting4one-master.zip
+$ cd cloud-bursting4one
+```
 
 Copy the main driver files in the Opennebula installation directory:
 
-  $ ONE_DIR=<your Opennebula installation dir>
-  $ cp src/main/resources/remotes/vmm/bursting ${ONE_DIR}/remotes/vmm/bursting
-  $ cp src/main/resources/remotes/im/bursting.d ${ONE_DIR}/remotes/im/bursting.d
-  
+```bash
+$ ONE_DIR=<your Opennebula installation dir>
+$ cp src/main/resources/remotes/vmm/bursting ${ONE_DIR}/remotes/vmm/bursting
+$ cp src/main/resources/remotes/im/bursting.d ${ONE_DIR}/remotes/im/bursting.d
+```
+
 Create the soft links needed for each API driver:
 
-  $ cd ${ONE_DIR}/remotes
-  $ for api in jclouds cloudstack; do ln -s vmm/bursting vmm/${api}; done 
-  $ for api in jclouds cloudstack; do ln -s im/bursting.d im/${api}.d; done
+```bash
+$ cd ${ONE_DIR}/remotes
+$ for api in jclouds cloudstack; do ln -s vmm/bursting vmm/${api}; done 
+$ for api in jclouds cloudstack; do ln -s im/bursting.d im/${api}.d; done
+```
 
 Copy the configuration driver files in the Opennebula configuration directory:
 
-  $ ONE_CONF=<your Opennebula configuration dir>
-  $ cp src/main/resources/etc/ ${ONE_CONF}
+```bash
+$ ONE_CONF=<your Opennebula configuration dir>
+$ cp src/main/resources/etc/ ${ONE_CONF}
+```
 
 # Configuration
 
