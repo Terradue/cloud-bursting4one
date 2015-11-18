@@ -1,6 +1,6 @@
 # cloud-bursting4one
 
-The cloud-bursting4one driver is an OpenNebula add-on that implements hybrid Cloud computing, to support Cloud bursting, with the ability to work with a variety of public Cloud providers. It is designed to be modular to ease the integration of new Cloud provider APIs. Currently it supports the [Apache Jclouds library](<https://jclouds.apache.org/>) and the [CloudStack API](<https://cloudstack.apache.org/>). Future developments will support the [OCCI API](http://occi-wg.org/).
+The cloud-bursting4one driver is an OpenNebula add-on that implements hybrid Cloud computing, with the ability to support Cloud bursting on a variety of public Cloud providers. It's modular design eases the integration of new Cloud provider APIs.. Currently it supports the [Apache Jclouds library](<https://jclouds.apache.org/>) and the [CloudStack API](<https://cloudstack.apache.org/>). Future developments will support the [OCCI API](http://occi-wg.org/).
 It is a generalization of the previous Opennebula add-on [jclouds4one](https://github.com/OpenNebula/addon-jclouds4one).
 This work has been co-funded by the European Commission (EC) in the context of the FP7 [SenSyF](<http://www.sensyf.eu>) project.
 
@@ -30,7 +30,7 @@ Implements hybrid Cloud computing, to support Cloud bursting, with the ability t
 
 ## Limitations
 
-It is not tested with all the listed providers, so contributions in this way are appreciated.
+It is not tested with all the listed providers, so contributions in this matter are appreciated.
 
 ## Installation by RPM
 
@@ -161,6 +161,7 @@ onehost create ec-accountA --im jclouds --vm jclouds --net dummy
 
 * Prepare a template suitable for the cloud-bursting4one driver, using either the Sunstone GUI or the following commands:
 
+```bash
 cat ec2_template.txt
 
 NAME="EC2 VM"
@@ -172,9 +173,10 @@ PUBLIC=[
     HARDWAREID="t1.micro",
     LOCATIONID="us-east-1d"
   ]
-
-	$ onetemplate create jclouds.txt
-	ID: 2
+```
+```bash
+onetemplate create jclouds.txt
+```
 
 ## Start the virtual machine
 
