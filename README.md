@@ -71,16 +71,16 @@ The cloud-bursting4one driver includes the following interfaces:
 * jclouds
 * cloudstack
 
-## API configuration
+## API driver configuration
 
-* To configure the *general settings* for an API, just edit the file /etc/one/*api*_driver.conf. For example for *jclouds*:
+* To configure the *general settings* for an API driver, just edit the file /etc/one/*api*_driver.conf. For example for *jclouds*:
 
 ```bash
 jclouds_cmd: /usr/bin/jclouds-cli
 context_path: /cloud/remote_context/jclouds/iso
 ```
 
-* To configure the *accounts* for an API, just edit the file /etc/one/*api*_driver.conf. For example for *jclouds*:
+* To configure the *accounts* for an API driver, just edit the file /etc/one/*api*_driver.conf. For example for *jclouds*:
 
 ```bash
 hosts:
@@ -104,7 +104,7 @@ hosts:
 
 *NOTE*
 
-Depending on the API, the content of the configuration file could be different. Examples of configurations are provided in the code.
+Depending on the API driver, the content of the configuration file could be different. Examples of configurations are provided in the code.
 
 ## Opennebula core configuration
 
