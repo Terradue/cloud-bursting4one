@@ -37,7 +37,7 @@ It is not tested with all the listed providers, so contributions in this way are
 This project is developed with Maven and the RPM provided with the rpm-maven-plugin (read `pom.xml`). Once you have built the project, install the package by:
 
 ```bash
-$ rpm -Uvh cloud-bursting4one.rpm
+rpm -Uvh cloud-bursting4one.rpm
 ```
 
 ## Manual Installation
@@ -45,31 +45,31 @@ $ rpm -Uvh cloud-bursting4one.rpm
 To manually install the driver, you have to download the repository as a ZIP:
 
 ```bash
-$ unzip cloud-bursting4one-master.zip
-$ cd cloud-bursting4one
+unzip cloud-bursting4one-master.zip
+cd cloud-bursting4one
 ```
 
 Copy the main driver files in the Opennebula installation directory:
 
 ```bash
-$ ONE_DIR=<your Opennebula installation dir>
-$ cp src/main/resources/remotes/vmm/bursting ${ONE_DIR}/remotes/vmm/bursting
-$ cp src/main/resources/remotes/im/bursting.d ${ONE_DIR}/remotes/im/bursting.d
+ONE_DIR=<your Opennebula installation dir>
+cp src/main/resources/remotes/vmm/bursting ${ONE_DIR}/remotes/vmm/bursting
+cp src/main/resources/remotes/im/bursting.d ${ONE_DIR}/remotes/im/bursting.d
 ```
 
 Create the soft links needed for each API driver:
 
 ```bash
-$ cd ${ONE_DIR}/remotes
-$ for api in jclouds cloudstack; do ln -s vmm/bursting vmm/${api}; done 
-$ for api in jclouds cloudstack; do ln -s im/bursting.d im/${api}.d; done
+cd ${ONE_DIR}/remotes
+for api in jclouds cloudstack; do ln -s vmm/bursting vmm/${api}; done 
+for api in jclouds cloudstack; do ln -s im/bursting.d im/${api}.d; done
 ```
 
 Copy the configuration driver files in the Opennebula configuration directory:
 
 ```bash
-$ ONE_CONF=<your Opennebula configuration dir>
-$ cp src/main/resources/etc/ ${ONE_CONF}
+ONE_CONF=<your Opennebula configuration dir>
+cp src/main/resources/etc/ ${ONE_CONF}
 ```
 
 # Configuration
