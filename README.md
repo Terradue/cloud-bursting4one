@@ -1,6 +1,6 @@
 # cloud-bursting4one
 
-The cloud-bursting4one driver is an OpenNebula add-on that implements hybrid Cloud computing, to support Cloud bursting, with the ability to work with a variety of public Cloud providers. It is designed to be modular to ease the integration of new Cloud provider APIs. Currently it supports the [Apache Jclouds library](<https://jclouds.apache.org/>) and the [CloudStack API](<https://cloudstack.apache.org/>). Future developments will support the [OCCI API](http://occi-wg.org/).
+The cloud-bursting4one driver is an OpenNebula add-on that implements hybrid Cloud computing, with the ability to support Cloud bursting on a variety of public Cloud providers. It's modular design eases the integration of new Cloud provider APIs. Currently it supports the [Apache Jclouds library](<https://jclouds.apache.org/>) and the [CloudStack API](<https://cloudstack.apache.org/>). Future developments will support the [OCCI API](http://occi-wg.org/).
 It is a generalization of the previous Opennebula add-on [jclouds4one](https://github.com/OpenNebula/addon-jclouds4one).
 This work has been co-funded by the European Commission (EC) in the context of the FP7 [SenSyF](<http://www.sensyf.eu>) project.
 
@@ -30,57 +30,65 @@ Implements hybrid Cloud computing, to support Cloud bursting, with the ability t
 
 ## Limitations
 
-It is not tested with all the listed providers, so contributions in this way are appreciated.
+It is not tested with all the listed providers, so contributions in this matter are appreciated.
 
 ## Installation by RPM
 
 This project is developed with Maven and the RPM provided with the rpm-maven-plugin (read `pom.xml`). Once you have built the project, install the package by:
 
 ```bash
-$ rpm -Uvh cloud-bursting4one.rpm
+rpm -Uvh cloud-bursting4one.rpm
 ```
 
 ## Manual Installation
 
 To manually install the driver, you have to download the repository as a ZIP:
 
-  $ unzip cloud-bursting4one-master.zip
-  $ cd cloud-bursting4one
+```bash
+unzip cloud-bursting4one-master.zip
+cd cloud-bursting4one
+```
 
 Copy the main driver files in the Opennebula installation directory:
 
-  $ ONE_DIR=<your Opennebula installation dir>
-  $ cp src/main/resources/remotes/vmm/bursting ${ONE_DIR}/remotes/vmm/bursting
-  $ cp src/main/resources/remotes/im/bursting.d ${ONE_DIR}/remotes/im/bursting.d
-  
+```bash
+ONE_DIR=<your Opennebula installation dir>
+cp src/main/resources/remotes/vmm/bursting ${ONE_DIR}/remotes/vmm/bursting
+cp src/main/resources/remotes/im/bursting.d ${ONE_DIR}/remotes/im/bursting.d
+```
+
 Create the soft links needed for each API driver:
 
-  $ cd ${ONE_DIR}/remotes
-  $ for api in jclouds cloudstack; do ln -s vmm/bursting vmm/${api}; done 
-  $ for api in jclouds cloudstack; do ln -s im/bursting.d im/${api}.d; done
+```bash
+cd ${ONE_DIR}/remotes
+for api in jclouds cloudstack; do ln -s vmm/bursting vmm/${api}; done 
+for api in jclouds cloudstack; do ln -s im/bursting.d im/${api}.d; done
+```
 
 Copy the configuration driver files in the Opennebula configuration directory:
 
-  $ ONE_CONF=<your Opennebula configuration dir>
-  $ cp src/main/resources/etc/ ${ONE_CONF}
+```bash
+ONE_CONF=<your Opennebula configuration dir>
+cp src/main/resources/etc/ ${ONE_CONF}
+```
 
 # Configuration
 
-The cloud-bursting4one driver includes the following interfaces:
+The cloud-bursting4one driver includes the following APIs:
 
 * jclouds
 * cloudstack
 
-## API configuration
+## API driver configuration
 
-* To configure the *general settings* for an API, just edit the file /etc/one/*api*_driver.conf. For example for *jclouds*:
+* To configure the *general settings* for an API driver, just edit the file /etc/one/*api*_driver.conf. For example for *jclouds*:
 
 ```bash
 jclouds_cmd: /usr/bin/jclouds-cli
 context_path: /cloud/remote_context/jclouds/iso
 ```
 
-* To configure the *accounts* for an API, just edit the file /etc/one/*api*_driver.conf. For example for *jclouds*:
+* To configure the *accounts* for an API driver, just edit the file /etc/one/*api*_driver.conf. For example for *jclouds*:
 
 ```bash
 hosts:
@@ -104,7 +112,7 @@ hosts:
 
 *NOTE*
 
-Depending on the API, the content of the configuration file could be different. Examples of configurations are provided in the code.
+Depending on the API driver, the content of the configuration file could be different. Examples of configurations are provided in the code.
 
 ## Opennebula core configuration
 
@@ -153,6 +161,7 @@ onehost create ec-accountA --im jclouds --vm jclouds --net dummy
 
 * Prepare a template suitable for the cloud-bursting4one driver, using either the Sunstone GUI or the following commands:
 
+```bash
 cat ec2_template.txt
 
 NAME="EC2 VM"
@@ -164,9 +173,10 @@ PUBLIC=[
     HARDWAREID="t1.micro",
     LOCATIONID="us-east-1d"
   ]
-
-	$ onetemplate create jclouds.txt
-	ID: 2
+```
+```bash
+onetemplate create jclouds.txt
+```
 
 ## Start the virtual machine
 
