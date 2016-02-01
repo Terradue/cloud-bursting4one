@@ -31,6 +31,7 @@ require 'rubygems'
 require 'uri'
 require 'json'
 require 'jsonpath'
+require 'occi-api'
 
 $: << RUBY_LIB_LOCATION
 
