@@ -25,82 +25,6 @@ class OcciDriver < BurstingDriver
   DRIVER_CONF    = "#{ETC_LOCATION}/occi_driver.conf"
   DRIVER_DEFAULT = "#{ETC_LOCATION}/occi_driver.default"
 
-  # Public provider commands costants
-  PUBLIC_CMD = {
-    :run => {
-      :cmd => :deploy,
-      :subcmd => :virtualmachine,
-      :args => {
-        "ZONEID" => {
-          :opt => 'zoneid'
-        },
-        "TEMPLATEID" => {
-          :opt => 'templateid'
-        },
-        "SERVICEOFFERINGID" => {
-          :opt => 'serviceofferingid'
-        },
-      },
-    },
-    :get => {
-      :cmd    => :list,
-      :subcmd => :virtualmachines,
-      :args => {
-        "ID" => {
-          :opt => 'id'
-        },
-      },
-    },
-    :delete => {
-      :cmd => :destroy,
-      :subcmd => :virtualmachine,
-      :args => {
-        "ID" => {
-          :opt => 'id'
-        },
-        "EXPUNGE" => {
-          :opt => 'expunge'
-        },
-      },
-    },
-    :reboot => {
-      :cmd => :reboot,
-      :subcmd => :virtualmachine,
-      :args => {
-        "ID" => {
-          :opt => 'id'
-        },
-      },
-    },
-    :save => {
-      :cmd => :stop,
-      :subcmd => :virtualmachine,
-      :args => {
-        "ID" => {
-          :opt => 'id'
-        },
-      },
-    },
-    :resume => {
-      :cmd => :start,
-      :subcmd => :virtualmachine,
-      :args => {
-        "ID" => {
-          :opt => 'id'
-        },
-      },
-    },
-    :job => {
-      :cmd => :query,
-      :subcmd => :asyncjobresult,
-      :args => {
-        "ID" => {
-          :opt => 'jobid'
-        },
-      },
-    }
-  }
-
   # Child driver specific attributes
   DRV_POLL_ATTRS = {
     :ipaddress     => POLL_ATTRS[:privateaddresses],
@@ -120,197 +44,175 @@ class OcciDriver < BurstingDriver
     hosts = @public_cloud_conf['hosts']
     @host = hosts[host] || hosts["default"]
     
-    @endpoint = @host['endpoint']
-    @voms = @host['voms']
-    @type = @host['type']
+    @endpoint        = @host['endpoint']
+    @x509_user_proxy = @host['x509_user_proxy']
+    @voms            = @host['voms']
+    @type            = @host['type']
     @context_path.concat("/#{@host['provider']}/")
     
   end
 
   def create_instance(vm_id, opts, context_xml)
     
-    user_cert = "/tmp/x509_pusp"
-    occi      = get_occi_client(user_cert)
+    # TODO: Manage the user proxy based on the actual user requesting it
+    user_cert = "/tmp/x509_pusp_catania"
     
-    compute = occi.get_resource("compute")
+    occi    = get_occi_client user_cert
+    compute = occi.get_resource "compute"
     
+    # TODO Check the actual method parameters
     os = occi.get_mixin(OS_TEMPLATE, "os_tpl")
     size = occi.get_mixin('medium', "resource_tpl")
 
     ## attach chosen resources to the compute resource
     compute.mixins << os << size
     
-    ## attach chosen resources to the compute resource
-    compute.mixins << os << size
     ## set the title
     compute.title = "one-#{vm_id}"
     
     ## create the compute resource and get its location
-    compute_loc = occi.create(compute)
+    deploy_id = occi.create compute
+    
     ## get the compute resource data
-    compute_data = occi.describe(compute_loc)
+    compute_data = occi.describe deploy_id
     
     ## wait until the resource is "active"
     while compute_data[0].resources.first.attributes.occi.compute.state == "inactive"
       sleep 1
-      compute_data = occi.describe(compute_loc)
+      compute_data = occi.describe deploy_id
     end
     
+    # TODO Check the actual attributes
+    ## wait until the resource provides the internal IP
+    while compute_data[0].resources.first.attributes.occi.compute.ip != ""
+      sleep 1
+      compute_data = occi.describe deploy_id
+    end
     
-    ##########
-    
-    cmd    = self.class::PUBLIC_CMD[:run][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:run][:subcmd]
-    args = ""
-
-    opts.each {|k,v|
-      args.concat(" ")
-      args.concat("#{k}=#{v}")
+    # The context_id is one of the privateaddresses.
+    # The safest solution is to create a context for all the
+    # addresses associated to the vm.
+    privateaddresses.each { |privateaddress|
+      create_context(context_xml, privateaddress.gsub(".", "-"))
     }
-    
-    args.concat(" ")
-    args.concat("displayname=one-#{vm_id}")
-    
-    log("#{LOG_LOCATION}/#{vm_id}.log","deploy","Command:#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-    
-    begin
-      # Synchronous call
-      # This implies asyncblock = true in the cloudmonkey configuration
-      # It is needed to avoid the RUNNING state before the instance is
-      # actualy Running.
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-      
-      raise "Error creating the instance" if !rc
-    rescue => e
-      STDERR.puts e.message
-      exit(-1)
-    end
-    
-    # Removing spurious chars from the command output
-    info.gsub!("\r","")
-    info.gsub!("\\ ","")
-    info.gsub!("\/ ","")
-    info.gsub!("\| ","")
-    info.gsub!("\- ","")
-
-    log("#{LOG_LOCATION}/#{vm_id}.log","deploy","API Info: #{info}")
-    
-    deploy_id = JsonPath.on(info, "$..virtualmachine.id")[0]
-    
-    log("#{LOG_LOCATION}/#{vm_id}.log","deploy","Deploy ID: #{deploy_id}")
-    
-    # Create the context for the VM 
-    privateaddresses_attr = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
-    privateaddresses = JsonPath.on(info, "$..#{privateaddresses_attr}")
-    
-    unless privateaddresses.nil? || privateaddresses.length == 0
-      # The context_id is one of the privateaddresses.
-      # The safest solution is to create a context for all the
-      # privateaddresses associated to the vm.
-      privateaddresses.each { |privateaddress|
-        create_context(context_xml, privateaddress.gsub(".", "-"))
-      }
-    end
     
     return deploy_id
   end
   
   def get_instance(deploy_id)
     
-    cmd    = self.class::PUBLIC_CMD[:get][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:get][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:get][:args]["ID"][:opt]}=#{deploy_id}"
+    occi = get_occi_client
     
     begin
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
+      compute_data = occi.describe deploy_id
       
-      raise "Instance #{id} does not exist" if !rc
+      raise "Instance #{deploy_id} does not exist" if !rc
     rescue => e
       STDERR.puts e.message
       exit(-1)
     end
     
-    instance = JSON.parse(info)
-    return instance['virtualmachine'][0]
+    # TODO Check the actual object to return
+    return compute_data[0]
   end
   
   def destroy_instance(deploy_id)
-    
-    cmd    = self.class::PUBLIC_CMD[:delete][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:delete][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:delete][:args]["ID"][:opt]}=#{deploy_id}"
-    
-    args.concat(" ")
-    args.concat("#{self.class::PUBLIC_CMD[:delete][:args]["EXPUNGE"][:opt]}=True")
-    
-    vm = get_instance(deploy_id)
-    
-    vm_id = vm["displayname"].match(/one-(.*)/)[1]
-    
-    log("#{LOG_LOCATION}/#{vm_id}.log","destroy","Command: #{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
   
+    occi = get_occi_client
+
     begin
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-    end while !rc 
+      compute_data = occi.describe deploy_id
+      
+      raise "Instance #{deploy_id} does not exist" if !rc
+    rescue => e
+      STDERR.puts e.message
+      exit(-1)
+    end
+    
+    vm_id = compute_data[0].resources.first.attributes.occi.compute.title.match(/one-(.*)/)[1]
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","destroy","Start")
+    
+    begin
+      compute_data = occi.delete(deploy_id)
+      
+      raise "Instance #{deploy_id} does not exist" if !rc
+    rescue => e
+      STDERR.puts e.message
+      exit(-1)
+    end
     
     # The context_id is one of the privateaddresses.
     # The safest solution is to check and remove all the privateaddresses 
     # associated to the vm.    
     key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
-    privateaddresses = JsonPath.on(vm, "$..#{key}")
+    # TODO Check the exact attribute
+    privateaddresses = compute_data[0].resources.first.attributes.occi.compute.ip
     
     privateaddresses.each { |privateaddress|
       remove_context(privateaddress.gsub(".", "-"))
     }
 
-    log("#{LOG_LOCATION}/#{vm_id}.log","destroy","API Info: #{info}")
+    log("#{LOG_LOCATION}/#{vm_id}.log","destroy","End")
     
-    return info
+    # TODO Check the object to return
+    return compute_data[0]
   end
   
   def reboot_instance(deploy_id)
     
-    cmd    = self.class::PUBLIC_CMD[:reboot][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:reboot][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:reboot][:args]["ID"][:opt]}=#{deploy_id}"
-  
-    begin
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-    end while !rc 
+    occi = get_occi_client
 
-    return info
+    begin
+      compute_data = occi.restart deploy_id
+      
+      raise "Instance #{deploy_id} does not exist" if !rc
+    rescue => e
+      STDERR.puts e.message
+      exit(-1)
+    end 
+
+    # TODO Check the actual object to return
+    return compute_data[0]
   end
   
   def save_instance(deploy_id)
     
-    cmd    = self.class::PUBLIC_CMD[:save][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:save][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:save][:args]["ID"][:opt]}=#{deploy_id}"
-  
-    begin
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-    end while !rc
+    occi = get_occi_client
 
-    return info
+    begin
+      compute_data = occi.suspend deploy_id
+      
+      raise "Instance #{deploy_id} does not exist" if !rc
+    rescue => e
+      STDERR.puts e.message
+      exit(-1)
+    end 
+
+    # TODO Check the actual object to return
+    return compute_data[0]
   end
   
   def resume_instance(deploy_id)
     
-    cmd    = self.class::PUBLIC_CMD[:resume][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:resume][:subcmd]
-    args   = "#{self.class::PUBLIC_CMD[:resume][:args]["ID"][:opt]}=#{deploy_id}"
-  
-    begin
-      rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd} #{args}")
-    end while !rc 
+    occi = get_occi_client
 
-    return info
+    begin
+      compute_data = occi.start deploy_id
+      
+      raise "Instance #{deploy_id} does not exist" if !rc
+    rescue => e
+      STDERR.puts e.message
+      exit(-1)
+    end 
+
+    # TODO Check the actual object to return
+    return compute_data[0]
   end
 
   def monitor_all_vms(host_id)
     
-    cmd    = self.class::PUBLIC_CMD[:get][:cmd]
-    subcmd = self.class::PUBLIC_CMD[:get][:subcmd]
+    occi = get_occi_client
         
     totalmemory = 0
     totalcpu = 0
@@ -334,19 +236,27 @@ class OcciDriver < BurstingDriver
     usedcpu    = 0
     usedmemory = 0
     
-    rc, info = do_command("#{@cli_cmd} #{@auth} #{cmd} #{subcmd}")
+    begin
+      compute_data = occi.describe deploy_id
+      
+      raise "Instance #{deploy_id} does not exist" if !rc
+    rescue => e
+      STDERR.puts e.message
+      exit(-1)
+    end
     
-    if !info.empty?
-      instance = JSON.parse(info)
+    # TODO Check the compute_data object
+    if !compute_data[0]resources.empty?
+      compute_data[0].resources
     
       # For each instance 'virtualmachine'
-      instance['virtualmachine'].each { |vm|
-        next if vm["state"] != "Running" && vm["state"] != "Starting"
+      compute_data[0].resources.each { |vm|
+        next if vm.attributes.occi.compute.state != "active"
         
         poll_data = parse_poll(vm)
         
-        displayname = vm["displayname"]
-        id = vm["id"]
+        displayname = vm.attributes.occi.compute.title
+        id = vm.attributes.occi.compute.id
         
         one_id = displayname.match(/one-(.*)/)
         
@@ -377,9 +287,10 @@ class OcciDriver < BurstingDriver
       if !vm
         state = VM_STATE[:deleted]
       else
-        state = case vm['state']
-        when "Running", "Starting"
+        state = case vm.attributes.occi.compute.state
+        when "active"
           VM_STATE[:active]
+        # TODO Check the actual states
         when "Suspended", "Stopping", 
           VM_STATE[:paused]
         else
@@ -388,13 +299,14 @@ class OcciDriver < BurstingDriver
       end
     
       info << "#{POLL_ATTRIBUTE[:state]}=#{state} "
-    
+      
       # Search for the value(s) corresponding to the DRV_POLL_ATTRS keys
       DRV_POLL_ATTRS.map { |key, value|
-        results = JsonPath.on(vm, "$..#{key}")
+        # TODO Check the dynamic method works
+        results = vm.attributes.occi.compute.public_send(key)
         if results.length > 0
           results.join(",")
-          info << "CLOUDSTACK_#{value.to_s.upcase}=#{URI::encode(results.join(","))} "
+          info << "OCCI_#{value.to_s.upcase}=#{URI::encode(results.join(","))} "
         end  
       }
     
@@ -409,7 +321,8 @@ class OcciDriver < BurstingDriver
  
 private
 
-  def get_occi_client(user_cert)
+  # TODO Choose a location for the default PUSP cert 
+  def get_occi_client(user_cert=@x509_user_proxy)
 
     begin
       ## get an OCCI::Api::Client::ClientHttp instance
