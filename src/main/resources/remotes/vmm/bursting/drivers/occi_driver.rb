@@ -27,8 +27,23 @@ class OcciDriver < BurstingDriver
 
   # Child driver specific attributes
   DRV_POLL_ATTRS = {
-    :ipaddress     => POLL_ATTRS[:privateaddresses],
-    :publicaddress => POLL_ATTRS[:publicaddresses]
+    :privateaddress => POLL_ATTRS[:privateaddresses],
+    :publicaddress  => POLL_ATTRS[:publicaddresses]
+  }
+  
+  # Public provider commands costants
+  PUBLIC_CMD = {
+    :run => {
+      :cmd => :create,
+      :args => {
+        "OS_TPL" => {
+          :opt => 'os_tpl'
+        },
+        "RESOURCE_TPL" => {
+          :opt => 'resource_tpl'
+        },
+      },
+    }
   }
 
   def initialize(host)
@@ -55,17 +70,16 @@ class OcciDriver < BurstingDriver
   def create_instance(vm_id, opts, context_xml)
     
     # TODO: Manage the user proxy based on the actual user requesting it
-    user_cert = "/tmp/x509_pusp_catania"
+    user_cert = @x509_user_proxy
     
     occi    = get_occi_client user_cert
     compute = occi.get_resource "compute"
-    
-    # TODO Check the actual method parameters
-    os = occi.get_mixin(OS_TEMPLATE, "os_tpl")
-    size = occi.get_mixin('medium', "resource_tpl")
 
     ## attach chosen resources to the compute resource
-    compute.mixins << os << size
+    ## the assumption here is that opts contains only mixins
+    opts.each {|k,v|
+      compute.mixins << v
+    }
     
     ## set the title
     compute.title = "one-#{vm_id}"
@@ -77,43 +91,26 @@ class OcciDriver < BurstingDriver
     compute_data = occi.describe deploy_id
     
     ## wait until the resource is "active"
-    while compute_data[0].resources.first.attributes.occi.compute.state == "inactive"
+    while compute_data.first.attributes.occi.compute.state == "inactive"
       sleep 1
       compute_data = occi.describe deploy_id
     end
     
-    # TODO Check the actual attributes
-    ## wait until the resource provides the internal IP
-    while compute_data[0].resources.first.attributes.occi.compute.ip != ""
+    ## wait until the resource provides the IP
+    while compute_data.first.links.first.attributes.occi.networkinterface.address != ""
       sleep 1
       compute_data = occi.describe deploy_id
     end
     
-    # The context_id is one of the privateaddresses.
+    # The context_id is one of the IP addresses.
     # The safest solution is to create a context for all the
     # addresses associated to the vm.
-    privateaddresses.each { |privateaddress|
-      create_context(context_xml, privateaddress.gsub(".", "-"))
+    compute_data.first.links.each { |link|
+      address = link.attributes.occi.networkinterface.address
+      create_context(context_xml, address.gsub(".", "-"))
     }
     
     return deploy_id
-  end
-  
-  def get_instance(deploy_id)
-    
-    occi = get_occi_client
-    
-    begin
-      compute_data = occi.describe deploy_id
-      
-      raise "Instance #{deploy_id} does not exist" if !rc
-    rescue => e
-      STDERR.puts e.message
-      exit(-1)
-    end
-    
-    # TODO Check the actual object to return
-    return compute_data[0]
   end
   
   def destroy_instance(deploy_id)
@@ -129,12 +126,12 @@ class OcciDriver < BurstingDriver
       exit(-1)
     end
     
-    vm_id = compute_data[0].resources.first.attributes.occi.compute.title.match(/one-(.*)/)[1]
+    vm_id = compute_data.first.attributes.occi.core.title.match(/one-(.*)/)[1]
     
     log("#{LOG_LOCATION}/#{vm_id}.log","destroy","Start")
     
     begin
-      compute_data = occi.delete(deploy_id)
+      compute_data = occi.delete deploy_id
       
       raise "Instance #{deploy_id} does not exist" if !rc
     rescue => e
@@ -143,20 +140,13 @@ class OcciDriver < BurstingDriver
     end
     
     # The context_id is one of the privateaddresses.
-    # The safest solution is to check and remove all the privateaddresses 
-    # associated to the vm.    
-    key = DRV_POLL_ATTRS.invert[POLL_ATTRS[:privateaddresses]]
-    # TODO Check the exact attribute
-    privateaddresses = compute_data[0].resources.first.attributes.occi.compute.ip
-    
-    privateaddresses.each { |privateaddress|
-      remove_context(privateaddress.gsub(".", "-"))
-    }
+    # The safest solution is to check and remove all the addresses 
+    # associated to the vm.
 
     log("#{LOG_LOCATION}/#{vm_id}.log","destroy","End")
     
     # TODO Check the object to return
-    return compute_data[0]
+    return compute_data.first
   end
   
   def reboot_instance(deploy_id)
@@ -164,7 +154,8 @@ class OcciDriver < BurstingDriver
     occi = get_occi_client
 
     begin
-      compute_data = occi.restart deploy_id
+      
+      result = occi.trigger(deploy_id,get_actioninstance("restart"))
       
       raise "Instance #{deploy_id} does not exist" if !rc
     rescue => e
@@ -172,8 +163,7 @@ class OcciDriver < BurstingDriver
       exit(-1)
     end 
 
-    # TODO Check the actual object to return
-    return compute_data[0]
+    return result
   end
   
   def save_instance(deploy_id)
@@ -181,7 +171,7 @@ class OcciDriver < BurstingDriver
     occi = get_occi_client
 
     begin
-      compute_data = occi.suspend deploy_id
+      result = occi.trigger(deploy_id,get_actioninstance("suspend"))
       
       raise "Instance #{deploy_id} does not exist" if !rc
     rescue => e
@@ -189,8 +179,7 @@ class OcciDriver < BurstingDriver
       exit(-1)
     end 
 
-    # TODO Check the actual object to return
-    return compute_data[0]
+    return result
   end
   
   def resume_instance(deploy_id)
@@ -198,7 +187,7 @@ class OcciDriver < BurstingDriver
     occi = get_occi_client
 
     begin
-      compute_data = occi.start deploy_id
+      result = occi.trigger(deploy_id,get_actioninstance("start"))
       
       raise "Instance #{deploy_id} does not exist" if !rc
     rescue => e
@@ -206,8 +195,7 @@ class OcciDriver < BurstingDriver
       exit(-1)
     end 
 
-    # TODO Check the actual object to return
-    return compute_data[0]
+    return result
   end
 
   def monitor_all_vms(host_id)
@@ -245,18 +233,16 @@ class OcciDriver < BurstingDriver
       exit(-1)
     end
     
-    # TODO Check the compute_data object
-    if !compute_data[0]resources.empty?
-      compute_data[0].resources
+    if !compute_data.empty?
     
       # For each instance 'virtualmachine'
-      compute_data[0].resources.each { |vm|
+      compute_data.each { |vm|
         next if vm.attributes.occi.compute.state != "active"
         
         poll_data = parse_poll(vm)
         
-        displayname = vm.attributes.occi.compute.title
-        id = vm.attributes.occi.compute.id
+        displayname = vm.attributes.occi.core.title
+        id = "#{@endpoint}/compute/#{vm.attributes.occi.core.id}"
         
         one_id = displayname.match(/one-(.*)/)
         
@@ -291,7 +277,7 @@ class OcciDriver < BurstingDriver
         when "active"
           VM_STATE[:active]
         # TODO Check the actual states
-        when "Suspended", "Stopping", 
+        when "suspended", "stopping", 
           VM_STATE[:paused]
         else
           VM_STATE[:deleted]
@@ -303,6 +289,7 @@ class OcciDriver < BurstingDriver
       # Search for the value(s) corresponding to the DRV_POLL_ATTRS keys
       DRV_POLL_ATTRS.map { |key, value|
         # TODO Check the dynamic method works
+        # TODO Understand the expected network types
         results = vm.attributes.occi.compute.public_send(key)
         if results.length > 0
           results.join(",")
@@ -321,7 +308,6 @@ class OcciDriver < BurstingDriver
  
 private
 
-  # TODO Choose a location for the default PUSP cert 
   def get_occi_client(user_cert=@x509_user_proxy)
 
     begin
@@ -345,6 +331,13 @@ private
       STDERR.puts e.message
       exit(-1)
     end
+    
+  end
+  
+  def get_actioninstance(term)
+    
+    action = Occi::Core::Action.new("http://schemas.ogf.org/occi/infrastructure/compute/action",term)
+    return Occi::Core::ActionInstance.new(action)
     
   end
   
