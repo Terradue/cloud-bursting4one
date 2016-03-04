@@ -17,7 +17,7 @@
         
   <properties>
     <site>default</site>
-    <redmine.projectID>cloud-bursting4one</redmine.projectID>
+    <redmine.projectID>terradue-production-center</redmine.projectID>
   </properties>
         
   <pluginRepositories>
