@@ -83,7 +83,7 @@ class BurstingDriver
     when DRIVERS[:cloudstack]
       CloudStackDriver.new(host)
     when DRIVERS[:occi]
-      CloudStackDriver.new(host)
+      OcciDriver.new(host)
     else
       raise "Bad bursting driver type: #{type}"
     end
