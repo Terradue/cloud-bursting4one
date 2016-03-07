@@ -225,9 +225,9 @@ class OcciDriver < BurstingDriver
     usedmemory = 0
     
     begin
-      compute_data = occi.describe deploy_id
+      compute_data = occi.list "compute"
       
-      raise "Instance #{deploy_id} does not exist" if !rc
+      raise "Error during the listing of the occi compute resources" if !compute_data
     rescue => e
       STDERR.puts e.message
       exit(-1)
@@ -237,12 +237,20 @@ class OcciDriver < BurstingDriver
     
       # For each instance 'virtualmachine'
       compute_data.each { |vm|
-        next if vm.attributes.occi.compute.state != "active"
-        
-        poll_data = parse_poll(vm)
-        
-        displayname = vm.attributes.occi.core.title
-        id = "#{@endpoint}/compute/#{vm.attributes.occi.core.id}"
+
+        begin
+          vm_info = occi.describe "#{vm}"
+        rescue => e
+          STDERR.puts e.message
+          next
+        end
+
+        next if vm_info.first.attributes.occi.compute.state != "active"
+
+        poll_data = parse_poll(vm_info)
+
+        displayname = vm_info.first.attributes.occi.core.title
+        id = "#{@endpoint}/compute/#{vm_info.first.attributes.occi.core.id}"
         
         one_id = displayname.match(/one-(.*)/)
         
@@ -273,7 +281,7 @@ class OcciDriver < BurstingDriver
       if !vm
         state = VM_STATE[:deleted]
       else
-        state = case vm.attributes.occi.compute.state
+        state = case vm.first.attributes.occi.compute.state
         when "active"
           VM_STATE[:active]
         # TODO Check the actual states
@@ -286,19 +294,15 @@ class OcciDriver < BurstingDriver
     
       info << "#{POLL_ATTRIBUTE[:state]}=#{state} "
       
-      # Search for the value(s) corresponding to the DRV_POLL_ATTRS keys
-      DRV_POLL_ATTRS.map { |key, value|
-        # TODO Check the dynamic method works
-        # TODO Understand the expected network types
-        results = vm.attributes.occi.compute.public_send(key)
-        if results.length > 0
-          results.join(",")
-          info << "OCCI_#{value.to_s.upcase}=#{URI::encode(results.join(","))} "
-        end  
-      }
-    
+      # TODO Understand the expected network types - just network/fixed with INFN Bari
+      address = vm.first.links.first.attributes.occi.networkinterface.address
+      
+      if !address
+        info << "OCCI_#{ POLL_ATTRS[:publicaddresses].upcase}=#{URI::encode(address)} "
+      end 
+          
       info
-    rescue
+    rescue => e
       # Unkown state if exception occurs retrieving information from
       # an instance
       STDERR.puts e.message
@@ -313,7 +317,7 @@ private
     begin
       ## get an OCCI::Api::Client::ClientHttp instance
       occi = Occi::Api::Client::ClientHttp.new({
-        :endpoint => ENDPOINT,
+        :endpoint => @endpoint,
         :auth => {
           :type               => @type,
           :user_cert          => user_cert,

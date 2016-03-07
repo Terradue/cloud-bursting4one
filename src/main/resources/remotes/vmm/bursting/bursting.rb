@@ -19,3 +19,4 @@ module Bursting; end
 require 'drivers/bursting_driver'
 require 'drivers/jclouds_driver'
 require 'drivers/cloudstack_driver'
+require 'drivers/occi_driver'
