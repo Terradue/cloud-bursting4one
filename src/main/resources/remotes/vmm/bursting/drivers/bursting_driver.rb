@@ -72,6 +72,7 @@ class BurstingDriver
   DRIVERS = {
     :jclouds    => 'jclouds',
     :cloudstack => 'cloudstack'
+    :occi       => 'occi'
   }
 
   def self.create(type,host)
@@ -80,6 +81,8 @@ class BurstingDriver
     when DRIVERS[:jclouds]
       JcloudsDriver.new(host)
     when DRIVERS[:cloudstack]
+      CloudStackDriver.new(host)
+    when DRIVERS[:occi]
       CloudStackDriver.new(host)
     else
       raise "Bad bursting driver type: #{type}"
