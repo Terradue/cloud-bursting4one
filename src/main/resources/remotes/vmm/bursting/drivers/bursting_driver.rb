@@ -71,7 +71,7 @@ class BurstingDriver
 
   DRIVERS = {
     :jclouds    => 'jclouds',
-    :cloudstack => 'cloudstack'
+    :cloudstack => 'cloudstack',
     :occi       => 'occi'
   }
 
