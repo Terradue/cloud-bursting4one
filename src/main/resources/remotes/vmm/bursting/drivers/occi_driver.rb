@@ -63,7 +63,7 @@ class OcciDriver < BurstingDriver
     @x509_user_proxy = @host['x509_user_proxy']
     @voms            = @host['voms']
     @type            = @host['type']
-    @context_path.concat("/#{@host['provider']}/")
+    @context_path.concat("/#{@hostname}/")
     
   end
 
@@ -76,7 +76,6 @@ class OcciDriver < BurstingDriver
     compute = occi.get_resource "compute"
 
     ## attach chosen resources to the compute resource
-    ## the assumption here is that opts contains only mixins
     opts.each {|k,v|
       compute.mixins << v
     }
@@ -97,7 +96,7 @@ class OcciDriver < BurstingDriver
     end
     
     ## wait until the resource provides the IP
-    while compute_data.first.links.first.attributes.occi.networkinterface.address != ""
+    while compute_data.first.links.first.attributes.occi.networkinterface.address == ""
       sleep 1
       compute_data = occi.describe deploy_id
     end
@@ -120,7 +119,7 @@ class OcciDriver < BurstingDriver
     begin
       compute_data = occi.describe deploy_id
       
-      raise "Instance #{deploy_id} does not exist" if !rc
+      raise "Instance #{deploy_id} does not exist" if !compute_data
     rescue => e
       STDERR.puts e.message
       exit(-1)
@@ -131,9 +130,9 @@ class OcciDriver < BurstingDriver
     log("#{LOG_LOCATION}/#{vm_id}.log","destroy","Start")
     
     begin
-      compute_data = occi.delete deploy_id
+      result = occi.delete deploy_id
       
-      raise "Instance #{deploy_id} does not exist" if !rc
+      raise "Instance #{deploy_id} does not exist" if !result
     rescue => e
       STDERR.puts e.message
       exit(-1)
@@ -142,11 +141,15 @@ class OcciDriver < BurstingDriver
     # The context_id is one of the privateaddresses.
     # The safest solution is to check and remove all the addresses 
     # associated to the vm.
+    
+    compute_data.first.links.each { |link|
+      address = link.attributes.occi.networkinterface.address
+      remove_context(address.gsub(".", "-"))
+    }
 
     log("#{LOG_LOCATION}/#{vm_id}.log","destroy","End")
     
-    # TODO Check the object to return
-    return compute_data.first
+    return deploy_id
   end
   
   def reboot_instance(deploy_id)
@@ -157,7 +160,7 @@ class OcciDriver < BurstingDriver
       
       result = occi.trigger(deploy_id,get_actioninstance("restart"))
       
-      raise "Instance #{deploy_id} does not exist" if !rc
+      raise "Instance #{deploy_id} does not exist" if !result
     rescue => e
       STDERR.puts e.message
       exit(-1)
@@ -173,7 +176,7 @@ class OcciDriver < BurstingDriver
     begin
       result = occi.trigger(deploy_id,get_actioninstance("suspend"))
       
-      raise "Instance #{deploy_id} does not exist" if !rc
+      raise "Instance #{deploy_id} does not exist" if !result
     rescue => e
       STDERR.puts e.message
       exit(-1)
@@ -189,7 +192,7 @@ class OcciDriver < BurstingDriver
     begin
       result = occi.trigger(deploy_id,get_actioninstance("start"))
       
-      raise "Instance #{deploy_id} does not exist" if !rc
+      raise "Instance #{deploy_id} does not exist" if !result
     rescue => e
       STDERR.puts e.message
       exit(-1)
@@ -297,7 +300,7 @@ class OcciDriver < BurstingDriver
       # TODO Understand the expected network types - just network/fixed with INFN Bari
       address = vm.first.links.first.attributes.occi.networkinterface.address
       
-      if !address
+      if address
         info << "OCCI_#{ POLL_ATTRS[:publicaddresses].upcase}=#{URI::encode(address)} "
       end 
           
@@ -343,6 +346,18 @@ private
     action = Occi::Core::Action.new("http://schemas.ogf.org/occi/infrastructure/compute/action",term)
     return Occi::Core::ActionInstance.new(action)
     
+  end
+  
+  def do_command(cmd)
+    
+    rc = LocalCommand.run(cmd)
+
+    if rc.code == 0
+      return [true, rc.stdout]
+    else
+      STDERR.puts("Error executing: #{cmd} err: #{rc.stderr} out: #{rc.stdout}")
+      return [false, rc.code]
+    end
   end
   
   def log(file,action,text)

@@ -4,6 +4,9 @@
 # requirements
 /usr/bin/gem install jsonpath --version '0.5.6'
 
+# log folder
+mkdir -p /var/log/one/bursting
+
 # Cloudstack driver
 # requirements
 /usr/bin/easy_install cloudmonkey==5.3.1
