@@ -3,7 +3,7 @@
 prefix="/var/lib/one/remotes"
 
 # Removing the soft links
-for driver in jclouds cloudstack
+for driver in jclouds cloudstack occi
 do
     # vmm
     dest="${prefix}/vmm/${driver}"

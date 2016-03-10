@@ -189,6 +189,8 @@ To extend the driver with an additional API, it is enough:
 
 * Add a wrapper Ruby class under *src/main/resources/remotes/vmm/bursting/drivers/* which extends the *BurstingDriver* class and implements the bursting actions.
 
+* Add the wrapper Ruby class *require* line in the Bursting module *src/main/resources/remotes/vmm/bursting/bursting.rb*.
+
 * Add a type for the new API driver in *src/main/resources/remotes/vmm/bursting/drivers/bursting_driver.rb*, see for example this code snippet: 
 
 ```ruby

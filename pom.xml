@@ -17,7 +17,7 @@
         
   <properties>
     <site>default</site>
-    <redmine.projectID>cloud-bursting4one</redmine.projectID>
+    <redmine.projectID>terradue-production-center</redmine.projectID>
   </properties>
         
   <pluginRepositories>
@@ -41,8 +41,7 @@
             <goals><goal>rpm</goal></goals>
             <phase>prepare-package</phase>
           </execution>
-        </executions>   
-
+        </executions>
         <configuration>
           <copyright>${project.inceptionYear}, Terradue, GPL</copyright>
           <distribution>Terradue ${project.inceptionYear}</distribution>
@@ -89,6 +88,14 @@
               </sources>
             </mapping>
             <mapping>
+              <directory>/var/lib/one/remotes/vmm/occi</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/vmm/bursting</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
               <directory>/var/lib/one/remotes/im/jclouds.d</directory>
               <sources>
                 <softlinkSource>
@@ -98,6 +105,14 @@
             </mapping>
             <mapping>
               <directory>/var/lib/one/remotes/im/cloudstack.d</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/im/bursting.d</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/var/lib/one/remotes/im/occi.d</directory>
               <sources>
                 <softlinkSource>
                   <location>/var/lib/one/remotes/im/bursting.d</location>
@@ -122,7 +137,6 @@
             <require>opennebula &gt;= 4.4</require>
             <require>jclouds-cli</require>
             <require>python-setuptools</require>
-            <require>ruby &gt;= 1.8.7</require>
           </requires>
           <needarch>noarch</needarch>
           <postinstallScriptlet>
@@ -131,19 +145,17 @@
           </postinstallScriptlet>
         </configuration>
       </plugin>
-      
       <plugin>
         <groupId>org.nuiton.jredmine</groupId>
         <artifactId>jredmine-maven-plugin</artifactId>
         <inherited>false</inherited>
       </plugin>
-      
       <plugin>
         <groupId>com.terradue</groupId>
-	<artifactId>rpmdeploy-maven-plugin</artifactId>
-	<version>1.2</version>
+        <artifactId>rpmdeploy-maven-plugin</artifactId>
+        <version>1.2</version>
       </plugin>
-      
     </plugins>
   </build>
 </project>
+
