@@ -31,6 +31,7 @@ require 'rubygems'
 require 'uri'
 require 'json'
 require 'jsonpath'
+require 'occi-api'
 
 $: << RUBY_LIB_LOCATION
 
@@ -70,7 +71,8 @@ class BurstingDriver
 
   DRIVERS = {
     :jclouds    => 'jclouds',
-    :cloudstack => 'cloudstack'
+    :cloudstack => 'cloudstack',
+    :occi       => 'occi'
   }
 
   def self.create(type,host)
@@ -80,6 +82,8 @@ class BurstingDriver
       JcloudsDriver.new(host)
     when DRIVERS[:cloudstack]
       CloudStackDriver.new(host)
+    when DRIVERS[:occi]
+      OcciDriver.new(host)
     else
       raise "Bad bursting driver type: #{type}"
     end

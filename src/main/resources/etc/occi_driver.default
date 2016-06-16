@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------- #
-# Copyright 2015, Terradue S.r.l.                                            #
+# Copyright 2002-2014, OpenNebula Project (OpenNebula.org), C12G Labs        #
 #                                                                            #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may    #
 # not use this file except in compliance with the License. You may obtain    #
@@ -12,11 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   #
 # See the License for the specific language governing permissions and        #
 # limitations under the License.                                             #
-# -------------------------------------------------------------------------- #
-
-module Bursting; end
-
-require 'drivers/bursting_driver'
-require 'drivers/jclouds_driver'
-require 'drivers/cloudstack_driver'
-require 'drivers/occi_driver'
+#--------------------------------------------------------------------------- #
+<!--
+ Default configuration attributes for the ABIQUO driver
+ (all domains will use these values as defaults)
+ Valid attributes are: IMAGEID HARDWAREID GROUP 
+ Use XML syntax to specify defaults, note elements are UPPERCASE
+ Example:
+ <TEMPLATE>
+   <PUBLIC_CLOUD>
+     <GROUP>default</GROUP>
+   </PUBLIC_CLOUD>
+ </TEMPLATE>
+-->
