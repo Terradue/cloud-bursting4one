@@ -72,9 +72,9 @@ class OcciDriver < BurstingDriver
     # TODO: Manage the user proxy based on the actual user requesting it
     user_cert = @x509_user_proxy
     
-    occi    = get_occi_client user_cert
-    compute = occi.get_resource "compute"
-    storage = value_from_xml(context_xml[0],"STORAGE_SIZE")
+    occi         = get_occi_client user_cert
+    compute      = occi.get_resource "compute"
+    storage_size = value_from_xml(context_xml[0],"STORAGE_SIZE")
 
     ## attach chosen resources to the compute resource
     opts.each {|k,v|
@@ -91,12 +91,12 @@ class OcciDriver < BurstingDriver
     
     log("#{LOG_LOCATION}/#{vm_id}.log","create","Compute #{deploy_id} created")
     
-    if storage
+    if storage_size
       
-      log("#{LOG_LOCATION}/#{vm_id}.log","create","Creating additional storage of #{storage} GB")
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Creating additional storage of #{storage_size} GB")
       
       storage       = occi.get_resource "storage"
-      storage.size  = storage #In GB
+      storage.size  = storage_size #In GB
       storage.title = "one-#{vm_id} additional disk"
       
       storage_id = occi.create storage
@@ -123,7 +123,7 @@ class OcciDriver < BurstingDriver
     
     # This step is performed here because both 'compute' and 'storage' resources
     # shall be ready before linking them
-    if storage
+    if storage_size
       
       log("#{LOG_LOCATION}/#{vm_id}.log","create","linking storage #{storage_id}")
       
