@@ -125,7 +125,7 @@ class OcciDriver < BurstingDriver
     # shall be ready before linking them
     if storage_size
       
-      log("#{LOG_LOCATION}/#{vm_id}.log","create","linking storage #{storage_id}")
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Linking storage #{storage_id}")
       
       link        = Occi::Core::Link.new("http://schemas.ogf.org/occi/infrastructure#storagelink")
       link.source = deploy_id
@@ -133,7 +133,7 @@ class OcciDriver < BurstingDriver
 
       occi.create link
       
-      log("#{LOG_LOCATION}/#{vm_id}.log","create","storage linked")
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Storage linked")
     end
         
     # The context_id is one of the IP addresses.
@@ -145,7 +145,7 @@ class OcciDriver < BurstingDriver
       create_context(context_xml, address.gsub(".", "-"))
     }
     
-    log("#{LOG_LOCATION}/#{vm_id}.log","create","Deploy completed")
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","Deploy one-#{vm_id} completed")
     
     return deploy_id
   end
