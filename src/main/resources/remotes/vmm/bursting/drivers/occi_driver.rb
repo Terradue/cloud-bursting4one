@@ -80,6 +80,8 @@ class OcciDriver < BurstingDriver
       compute.mixins << v
     }
     
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","Start")
+    
     ## set the title
     compute.title = "one-#{vm_id}"
     
@@ -101,6 +103,29 @@ class OcciDriver < BurstingDriver
       compute_data = occi.describe deploy_id
     end
     
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","compute #{deploy_id} created")
+    
+    storage_size = value_from_xml(context_xml,"STORAGE_SIZE")
+    
+    if storage_size
+      
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","additional storage size #{storage_size} GB")
+      
+      storage = client.get_resource "storage"
+      storage.size = storage_size #In GB
+      storage.title = "one-#{vm_id} additional disk"
+      
+      storage_id = occi.create storage
+      
+      link = Occi::Core::Link.new("http://schemas.ogf.org/occi/infrastructure#storagelink")
+      link.source = deploy_id
+      link.target = storage_id
+
+      occi.create link
+      
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","storage #{storage_id} attached")
+    end
+    
     # The context_id is one of the IP addresses.
     # The safest solution is to create a context for all the
     # addresses associated to the vm.
@@ -108,6 +133,8 @@ class OcciDriver < BurstingDriver
       address = link.attributes.occi.networkinterface.address
       create_context(context_xml, address.gsub(".", "-"))
     }
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","End")
     
     return deploy_id
   end
