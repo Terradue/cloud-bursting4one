@@ -94,10 +94,16 @@ class JcloudsDriver < BurstingDriver
     @common_args.concat(" --provider #{@host['provider']}")
     @common_args.concat(" --identity #{@host['identity']}")
     @common_args.concat(" --credential #{@host['credential']}")
+    
+    if @host['endpoint']
+      @common_args.concat(" --endpoint #{@host['endpoint']}")
+    end
+    
   end
 
   def create_instance(vm_id, opts, context_xml)
     command = self.class::PUBLIC_CMD[:run][:cmd]
+    floating_ip = value_from_xml(context_xml[0],"FLOATING_IP")
     
     args = @common_args.clone
 
@@ -119,6 +125,16 @@ class JcloudsDriver < BurstingDriver
     context_id = JSON.parse(info)['privateAddresses'].gsub(".", "-")
     
     create_context(context_xml, context_id)
+    
+    # This part is specific for the openstack-nova provider.
+    # It is a workaround since the floating ip creation doesn't work with
+    # jclouds at the moment, we use another external client for this
+    # attachment operation, which reads from the log location a special file
+    # with the floating_ip_ prefix.
+    if floating_ip
+      deploy_id = JSON.parse(info)['id']
+      log("#{LOG_LOCATION}/floating_ip_#{vm_id}","info","#{deploy_id}")
+    end
 
     return JSON.parse(info)['id']
   end
@@ -217,7 +233,7 @@ class JcloudsDriver < BurstingDriver
       XPath.each(xml_vm, "/VM/DEPLOY_ID") { |e2| deploy_id = e2.text }
 
       if !deploy_id.nil?
-	if !deploy_id.empty?
+        if !deploy_id.empty?
           instance = get_instance(deploy_id)
           poll_data = parse_poll(instance)
  

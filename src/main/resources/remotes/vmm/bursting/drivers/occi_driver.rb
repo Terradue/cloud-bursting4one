@@ -72,19 +72,37 @@ class OcciDriver < BurstingDriver
     # TODO: Manage the user proxy based on the actual user requesting it
     user_cert = @x509_user_proxy
     
-    occi    = get_occi_client user_cert
-    compute = occi.get_resource "compute"
+    occi         = get_occi_client user_cert
+    compute      = occi.get_resource "compute"
+    storage_size = value_from_xml(context_xml[0],"STORAGE_SIZE")
 
     ## attach chosen resources to the compute resource
     opts.each {|k,v|
       compute.mixins << v
     }
     
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","Start deploying one-#{vm_id}")
+    
     ## set the title
     compute.title = "one-#{vm_id}"
     
     ## create the compute resource and get its location
     deploy_id = occi.create compute
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","Compute #{deploy_id} created")
+    
+    if storage_size
+      
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Creating additional storage of #{storage_size} GB")
+      
+      storage       = occi.get_resource "storage"
+      storage.size  = storage_size #In GB
+      storage.title = "one-#{vm_id} additional disk"
+      
+      storage_id = occi.create storage
+      
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Additional storage created with id: #{storage_id}")
+    end
     
     ## get the compute resource data
     compute_data = occi.describe deploy_id
@@ -101,13 +119,33 @@ class OcciDriver < BurstingDriver
       compute_data = occi.describe deploy_id
     end
     
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","Compute #{deploy_id} ready")
+    
+    # This step is performed here because both 'compute' and 'storage' resources
+    # shall be ready before linking them
+    if storage_size
+      
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Linking storage #{storage_id}")
+      
+      link        = Occi::Core::Link.new("http://schemas.ogf.org/occi/infrastructure#storagelink")
+      link.source = deploy_id
+      link.target = storage_id
+
+      occi.create link
+      
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Storage linked")
+    end
+        
     # The context_id is one of the IP addresses.
     # The safest solution is to create a context for all the
     # addresses associated to the vm.
     compute_data.first.links.each { |link|
       address = link.attributes.occi.networkinterface.address
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Preparing context for #{address}")
       create_context(context_xml, address.gsub(".", "-"))
     }
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","Deploy one-#{vm_id} completed")
     
     return deploy_id
   end
@@ -358,15 +396,6 @@ private
       STDERR.puts("Error executing: #{cmd} err: #{rc.stderr} out: #{rc.stdout}")
       return [false, rc.code]
     end
-  end
-  
-  def log(file,action,text)
-
-    time = Time.now.strftime("%Y/%m/%d %H:%M")
-    open(file, 'a') { |f|
-      f.puts "[#{time}] [#{action}] #{text}"
-    }
-    
   end
 
 end
