@@ -126,14 +126,14 @@ class JcloudsDriver < BurstingDriver
     
     create_context(context_xml, context_id)
     
-    # This part is specific for the openstack-nova provider. Since it doesn't
-    # work with jclouds at the moment, we use another external client for this
+    # This part is specific for the openstack-nova provider.
+    # It is a workaround since the floating ip creation doesn't work with
+    # jclouds at the moment, we use another external client for this
     # attachment operation, which reads from the log location a special file
     # with the floating_ip_ prefix.
     if floating_ip
-      log("#{LOG_LOCATION}/#{vm_id}.log","info","#{info}")
-      deploy_id = JSON.parse(info)['deployId']
-      log("#{LOG_LOCATION}/floating_ip_#{deploy_id}","","")
+      deploy_id = JSON.parse(info)['id']
+      log("#{LOG_LOCATION}/floating_ip_#{vm_id}","info","#{deploy_id}")
     end
 
     return JSON.parse(info)['id']
