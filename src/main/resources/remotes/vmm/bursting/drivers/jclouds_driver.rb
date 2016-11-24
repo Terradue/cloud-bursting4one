@@ -134,6 +134,7 @@ class JcloudsDriver < BurstingDriver
       log("#{LOG_LOCATION}/#{vm_id}.log","info","#{info}")
       deploy_id = JSON.parse(info)['deployId']
       log("#{LOG_LOCATION}/floating_ip_#{deploy_id}","","")
+    end
 
     return JSON.parse(info)['id']
   end

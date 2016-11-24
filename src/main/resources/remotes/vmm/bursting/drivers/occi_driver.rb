@@ -397,14 +397,5 @@ private
       return [false, rc.code]
     end
   end
-  
-  def log(file,action,text)
-
-    time = Time.now.strftime("%Y/%m/%d %H:%M")
-    open(file, 'a') { |f|
-      f.puts "[#{time}] [#{action}] #{text}"
-    }
-    
-  end
 
 end
