@@ -94,6 +94,11 @@ class JcloudsDriver < BurstingDriver
     @common_args.concat(" --provider #{@host['provider']}")
     @common_args.concat(" --identity #{@host['identity']}")
     @common_args.concat(" --credential #{@host['credential']}")
+    
+    if @host['endpoint']
+      @common_args.concat(" --endpoint #{@host['endpoint']}")
+    end
+    
   end
 
   def create_instance(vm_id, opts, context_xml)
