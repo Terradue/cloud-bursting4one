@@ -336,12 +336,24 @@ class OcciDriver < BurstingDriver
       info << "#{POLL_ATTRIBUTE[:state]}=#{state} "
       
       # TODO Understand the expected network types - just network/fixed with INFN Bari
-      address = vm.first.links.first.attributes.occi.networkinterface.address
-      
-      if address
-        info << "OCCI_#{ POLL_ATTRS[:publicaddresses].upcase}=#{URI::encode(address)} "
-      end 
-          
+      # In particular we need to understand the difference between PRIVATE and PUBLIC addresses
+      links = vm.first.links
+
+      if !links.empty?
+        # For each instance 'link'
+        links.each { |link|
+          if link.rel.to_s.eql? "http://schemas.ogf.org/occi/infrastructure#network"
+
+            address = link.attributes.occi.networkinterface.address
+            if address
+              info << "OCCI_#{ POLL_ATTRS[:publicaddresses].upcase}=#{URI::encode(address)} "
+              # TODO: collect all the public addresses, concatenating them with a comma
+              break
+            end
+          end
+        }
+      end
+
       info
     rescue => e
       # Unkown state if exception occurs retrieving information from
