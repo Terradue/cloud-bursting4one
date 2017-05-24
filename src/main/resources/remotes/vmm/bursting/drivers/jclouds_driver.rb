@@ -137,6 +137,8 @@ class JcloudsDriver < BurstingDriver
         exit(-1)
     end
     
+    deploy_id = JSON.parse(info)['id']
+    
     log("#{LOG_LOCATION}/#{vm_id}.log","create","Compute #{deploy_id} created")
     
     # TODO manage the case of multiple addresses
@@ -150,7 +152,6 @@ class JcloudsDriver < BurstingDriver
     if floating_ip
       log("#{LOG_LOCATION}/#{vm_id}.log","create","Attaching a floating IP")
       
-      deploy_id = JSON.parse(info)['id']
       command = "createattachfloatingip"
       
       region = value_from_xml(context_xml[0],"REGION")
@@ -180,7 +181,6 @@ class JcloudsDriver < BurstingDriver
     if storage_size
       log("#{LOG_LOCATION}/#{vm_id}.log","create","Creating additional storage of #{storage_size} GB")
       
-      deploy_id = JSON.parse(info)['id']
       command = "createattachvolume"
       
       region = value_from_xml(context_xml[0],"REGION")
@@ -209,7 +209,7 @@ class JcloudsDriver < BurstingDriver
     
     log("#{LOG_LOCATION}/#{vm_id}.log","create","Deploy one-#{vm_id} completed")
 
-    return JSON.parse(info)['id']
+    return deploy_id
   end
 
   def get_instance(deploy_id)
