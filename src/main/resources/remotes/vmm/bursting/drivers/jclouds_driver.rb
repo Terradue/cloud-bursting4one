@@ -38,6 +38,9 @@ class JcloudsDriver < BurstingDriver
         "GROUP" => {
           :opt => '--group'
         },
+        "NETWORKID" => {
+          :opt => '--network'
+        },
       },
     },
     :get => {
@@ -107,7 +110,13 @@ class JcloudsDriver < BurstingDriver
     # Here we can just put this additional information into the CONTEXT part,
     # not the PUBLIC_CLOUD one, because the generic 'add' command doesn't have
     # these additional parameters.
+    # TODO: An improvement can be done by adding these additional methods at
+    # (i.e., createattachfloatingip, createattachvolume) at the BurstingDriver
+    # level.
+    
+    # floating_ip is a boolean
     floating_ip = value_from_xml(context_xml[0],"FLOATING_IP")
+    # storage_size is an integer 
     storage_size = value_from_xml(context_xml[0],"STORAGE_SIZE")
     
     args = @common_args.clone
