@@ -103,7 +103,12 @@ class JcloudsDriver < BurstingDriver
 
   def create_instance(vm_id, opts, context_xml)
     command = self.class::PUBLIC_CMD[:run][:cmd]
+    
+    # Here we can just put this additional information into the CONTEXT part,
+    # not the PUBLIC_CLOUD one, because the generic 'add' command doesn't have
+    # these additional parameters.
     floating_ip = value_from_xml(context_xml[0],"FLOATING_IP")
+    storage_size = value_from_xml(context_xml[0],"STORAGE_SIZE")
     
     args = @common_args.clone
 
@@ -111,6 +116,8 @@ class JcloudsDriver < BurstingDriver
       args.concat(" ")
       args.concat("#{k} #{v}")
     }
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","Start deploying one-#{vm_id}")
     
     begin
       rc, info = do_command("#{@cli_cmd} #{command} #{args}")
@@ -121,20 +128,77 @@ class JcloudsDriver < BurstingDriver
         exit(-1)
     end
     
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","Compute #{deploy_id} created")
+    
     # TODO manage the case of multiple addresses
     context_id = JSON.parse(info)['privateAddresses'].gsub(".", "-")
     
     create_context(context_xml, context_id)
     
     # This part is specific for the openstack-nova provider.
-    # It is a workaround since the floating ip creation doesn't work with
-    # jclouds at the moment, we use another external client for this
-    # attachment operation, which reads from the log location a special file
-    # with the floating_ip_ prefix.
+    # They are workarounds, since they're not generic operations.
+    # ==========================================================================
     if floating_ip
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Attaching a floating IP")
+      
       deploy_id = JSON.parse(info)['id']
-      log("#{LOG_LOCATION}/floating_ip_#{vm_id}","info","#{deploy_id}")
+      command = "createattachfloatingip"
+      
+      region = value_from_xml(context_xml[0],"REGION")
+      pool = value_from_xml(context_xml[0],"POOL")
+      server_id = deploy_id.match(/#{region}\/(.*)/)[1]
+      
+      args = @common_args.clone
+    
+      args.concat(" --serverid #{server_id}")
+      args.concat(" --region #{region}")
+      args.concat(" --pool #{pool}")
+      
+      begin
+        rc, info = do_command("#{@cli_cmd} #{command} #{args}")
+      
+        raise "Error attaching the IP" if !rc
+      rescue => e
+        STDERR.puts e.message
+        destroy_instance(deploy_id)
+        exit(-1)
+      end
+      
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Floating IP attached")
+      
     end
+    
+    if storage_size
+      log("#{LOG_LOCATION}/#{vm_id}.log","create","Creating additional storage of #{storage_size} GB")
+      
+      deploy_id = JSON.parse(info)['id']
+      command = "createattachvolume"
+      
+      region = value_from_xml(context_xml[0],"REGION")
+      device = value_from_xml(context_xml[0],"DEVICE")
+      server_id = deploy_id.match(/#{region}\/(.*)/)[1]
+      
+      args = @common_args.clone
+    
+      args.concat(" --serverid #{server_id}")
+      args.concat(" --region #{region}")
+      args.concat(" --device #{device}")
+      args.concat(" --name #{vm_id}")
+      args.concat(" --size #{storage_size}")
+      
+      begin
+        rc, info = do_command("#{@cli_cmd} #{command} #{args}")
+      
+        raise "Error attaching the storage" if !rc
+      rescue => e
+        STDERR.puts e.message
+        destroy_instance(deploy_id)
+        exit(-1)
+      end
+    end
+    # ==========================================================================
+    
+    log("#{LOG_LOCATION}/#{vm_id}.log","create","Deploy one-#{vm_id} completed")
 
     return JSON.parse(info)['id']
   end
