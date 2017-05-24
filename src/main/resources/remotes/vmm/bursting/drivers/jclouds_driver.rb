@@ -192,7 +192,7 @@ class JcloudsDriver < BurstingDriver
       args.concat(" --serverid #{server_id}")
       args.concat(" --region #{region}")
       args.concat(" --device #{device}")
-      args.concat(" --name #{vm_id}")
+      args.concat(" --name one-#{vm_id}")
       args.concat(" --size #{storage_size}")
       
       begin
