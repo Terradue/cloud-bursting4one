@@ -108,15 +108,31 @@ class OcciDriver < BurstingDriver
     compute_data = occi.describe deploy_id
     
     ## wait until the resource is "active"
-    while compute_data.first.attributes.occi.compute.state == "inactive"
+    while !compute_data.first.attributes.occi.compute.state.to_s.eql? "active"
       sleep 1
       compute_data = occi.describe deploy_id
     end
     
     ## wait until the resource provides the IP
-    while compute_data.first.links.first.attributes.occi.networkinterface.address == ""
+    address = ""
+    while address.to_s.eql? ""
+    
       sleep 1
       compute_data = occi.describe deploy_id
+      
+      links = compute_data.first.links
+
+      if !links.empty?
+        # For each instance 'link'
+        links.each { |link|
+          if link.rel.to_s.eql? "http://schemas.ogf.org/occi/infrastructure#network"
+            if !link.attributes.occi.networkinterface.address.to_s.empty?
+              address = link.attributes.occi.networkinterface.address
+              break
+            end 
+          end
+        }
+      end
     end
     
     log("#{LOG_LOCATION}/#{vm_id}.log","create","Compute #{deploy_id} ready")
@@ -140,9 +156,11 @@ class OcciDriver < BurstingDriver
     # The safest solution is to create a context for all the
     # addresses associated to the vm.
     compute_data.first.links.each { |link|
-      address = link.attributes.occi.networkinterface.address
-      log("#{LOG_LOCATION}/#{vm_id}.log","create","Preparing context for #{address}")
-      create_context(context_xml, address.gsub(".", "-"))
+      if link.rel.to_s.eql? "http://schemas.ogf.org/occi/infrastructure#network"
+        address = link.attributes.occi.networkinterface.address
+        log("#{LOG_LOCATION}/#{vm_id}.log","create","Preparing context for #{address}")
+        create_context(context_xml, address.gsub(".", "-"))
+      end
     }
     
     log("#{LOG_LOCATION}/#{vm_id}.log","create","Deploy one-#{vm_id} completed")
