@@ -123,7 +123,6 @@ VM_MAD = [
     name       = "jclouds",
     executable = "one_vmm_sh",
     arguments  = "-t 15 -r 0 jclouds",
-    default    = "vmm_exec/vmm_exec_jclouds.conf",
     type       = "xml" ]
 
 IM_MAD = [
