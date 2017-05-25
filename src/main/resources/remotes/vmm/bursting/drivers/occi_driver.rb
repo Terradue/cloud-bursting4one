@@ -63,7 +63,7 @@ class OcciDriver < BurstingDriver
     @x509_user_proxy = @host['x509_user_proxy']
     @voms            = @host['voms']
     @type            = @host['type']
-    @context_path.concat("/#{@host['provider']}/")
+    @context_path.concat("/#{@host['site']}/")
     
   end
 
