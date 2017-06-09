@@ -72,11 +72,11 @@ class BurstingDriver
   DRIVERS = {
     :jclouds    => 'jclouds',
     :cloudstack => 'cloudstack',
-    :occi       => 'occi'
+    :occi       => 'occi',
+    :libcloud   => 'libcloud'
   }
 
   def self.create(type,host)
-    
     case type
     when DRIVERS[:jclouds]
       JcloudsDriver.new(host)
@@ -84,11 +84,13 @@ class BurstingDriver
       CloudStackDriver.new(host)
     when DRIVERS[:occi]
       OcciDriver.new(host)
+    when DRIVERS[:libcloud]
+      LibcloudDriver.new(host)
     else
       raise "Bad bursting driver type: #{type}"
     end
   end
-
+  
   # Determining the bursting 'type', currently with a XML-RPC call
   # (it would be preferred through the ARGV arguments)
   # +vm_id+: String, representing the ID of the VM

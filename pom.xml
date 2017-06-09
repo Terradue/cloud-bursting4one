@@ -96,6 +96,14 @@
               </sources>
             </mapping>
             <mapping>
+              <directory>/var/lib/one/remotes/vmm/libcloud</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/vmm/bursting</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
               <directory>/var/lib/one/remotes/im/jclouds.d</directory>
               <sources>
                 <softlinkSource>
@@ -113,6 +121,14 @@
             </mapping>
             <mapping>
               <directory>/var/lib/one/remotes/im/occi.d</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/im/bursting.d</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>/var/lib/one/remotes/im/libcloud.d</directory>
               <sources>
                 <softlinkSource>
                   <location>/var/lib/one/remotes/im/bursting.d</location>
