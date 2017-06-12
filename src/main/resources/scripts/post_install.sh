@@ -24,6 +24,9 @@ then
 
     # destination folder for the generated user proxies
     mkdir -p /var/lib/occi/proxies/
+
+    # libcloudcli
+    /opt/miniconda2/bin/conda install libcloudcli -y
 fi
 
 exit 0
