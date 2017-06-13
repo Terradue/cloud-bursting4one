@@ -169,7 +169,8 @@ CONTEXT=[
 PUBLIC=[
     GROUP="default",
     HARDWAREID="t1.micro",
-    LOCATIONID="us-east-1d"
+    IMAGEID="us-east-1d/xxxxx"
+    TYPE="jclouds"
   ]
 ```
 ```bash

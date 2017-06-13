@@ -11,7 +11,7 @@
   <packaging>rpm</packaging>
   <name>cloud-bursting4one</name>
   <description>Cloud bursting driver for OpenNebula</description>
-  <version>1.0.6</version>
+  <version>1.0.7-SNAPSHOT</version>
   <properties>
     <site>default</site>
     <redmine.projectID>terradue-production-center</redmine.projectID>
@@ -93,6 +93,14 @@
               </sources>
             </mapping>
             <mapping>
+              <directory>/var/lib/one/remotes/vmm/libcloud</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/vmm/bursting</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
               <directory>/var/lib/one/remotes/im/jclouds.d</directory>
               <sources>
                 <softlinkSource>
@@ -117,6 +125,14 @@
               </sources>
             </mapping>
             <mapping>
+              <directory>/var/lib/one/remotes/im/libcloud.d</directory>
+              <sources>
+                <softlinkSource>
+                  <location>/var/lib/one/remotes/im/bursting.d</location>
+                </softlinkSource>
+              </sources>
+            </mapping>
+            <mapping>
               <directory>/etc/one/</directory>
               <configuration>noreplace</configuration>
               <username>root</username>
@@ -134,6 +150,7 @@
             <require>opennebula &gt;= 4.4</require>
             <require>jclouds-cli</require>
             <require>python-setuptools</require>
+	    <require>miniconda</require>
           </requires>
           <needarch>noarch</needarch>
           <postinstallScriptlet>
