@@ -26,7 +26,7 @@ then
     mkdir -p /var/lib/occi/proxies/
 
     # libcloudcli
-    /opt/miniconda2/bin/conda install libcloudcli -y
+    /opt/miniconda2/bin/conda install -c terradue libcloudcli -y
 fi
 
 exit 0
