@@ -40,9 +40,9 @@ class LibcloudDriver < BurstingDriver
 #        "GROUP" => {
 #          :opt => '--group'
 #        },
-	"NETWORKS" => {
-	  :opt => '--networks'
-	},
+        "NETWORKS" => {
+          :opt => '--networks'
+        },
         "POOL" => {
           :opt => '--floatingippool'
         }
@@ -101,10 +101,10 @@ class LibcloudDriver < BurstingDriver
 
   end
 
-#####################################
+
   def create_instance(vm_id, opts, context_xml)
 
-	log("/var/log/one/libcloud_dev","info","creating instance")
+    log("#{LOG_LOCATION}/#{vm_id}.log","info","creating instance")
     command = self.class::PUBLIC_CMD[:run][:cmd]
     
     args = @common_args.clone
@@ -115,46 +115,47 @@ class LibcloudDriver < BurstingDriver
     }
     
     begin
-	log("/var/log/one/libcloud_dev","info","#{@cli_cmd} #{command} #{args} --name \'one_#{vm_id}\' 2>/dev/null")
-       rc, info = do_command("#{@cli_cmd} #{command} #{args} --name \'one_#{vm_id}\' 2>/dev/null")
-	
-	log("/var/log/one/libcloud_dev","info","info: #{JSON.parse(info).to_s}")
-       	nodeId = JSON.parse(info)['data'][0]['id']	
-	log("/var/log/one/libcloud_dev","info","nodeid is #{nodeId.to_s}")
-       privateAddresses = JSON.parse(info)['data'][0]['private_ips']     
-	
-	log("/var/log/one/libcloud_dev","info","privateAddresses is #{privateAddresses}")
+      log("#{LOG_LOCATION}/#{vm_id}.log","info","#{@cli_cmd} #{command} #{args} --name \'one_#{vm_id}\' 2>/dev/null")
+      rc, info = do_command("#{@cli_cmd} #{command} #{args} --name \'one-#{vm_id}\' 2>/dev/null")
 
-	# while the node is not running
-	# timeout is set to 5 minutes
-	timeout_in_seconds = 5*60
-	Timeout.timeout(timeout_in_seconds) do
-	      while privateAddresses.nil? || privateAddresses.empty?  do
-  		  log("/var/log/one/libcloud_dev","info","waiting for the node to run")
-	          rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{nodeId}\' 2>/dev/null")
-	          privateAddresses = JSON.parse(info)['data'][0]['private_ips']
-	       end
-	end
+      log("#{LOG_LOCATION}/#{vm_id}.log","info","info: #{JSON.parse(info).to_s}")
+      nodeId = JSON.parse(info)['data'][0]['id']
+      log("#{LOG_LOCATION}/#{vm_id}.log","info","nodeid is #{nodeId.to_s}")
+      privateAddresses = JSON.parse(info)['data'][0]['private_ips']     
+       
+      log("#{LOG_LOCATION}/#{vm_id}.log","info","privateAddresses is #{privateAddresses}")
+
+      # while the node is not running
+      # timeout is set to 5 minutes
+      timeout_in_seconds = 5*60
+      Timeout.timeout(timeout_in_seconds) do
+        while privateAddresses.nil? || privateAddresses.empty?  do
+          log("#{LOG_LOCATION}/#{vm_id}.log","info","waiting for the node to run")
+          rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{nodeId}\' 2>/dev/null")
+          privateAddresses = JSON.parse(info)['data'][0]['private_ips']
+        end
+      end
 
       raise "Error creating the instance" if !rc
     rescue => e
-       log("/var/log/one/libcloud_dev","error", "### ERROR\n An error occured " + e.message)
+       log("#{LOG_LOCATION}/#{vm_id}.log","error", "### ERROR\n An error occured " + e.message)
       STDERR.puts e.message
         exit(-1)
     end
-	privateAddresses.each { |ip|
-		context_id = ip.gsub(".", "-") 
-		create_context(context_xml, context_id) 
-	}
+    
+    privateAddresses.each { |ip|
+      context_id = ip.gsub(".", "-") 
+      create_context(context_xml, context_id) 
+    }
 
-	log("/var/log/one/libcloud_dev","info","returning nodeid #{nodeId}") 
+    log("#{LOG_LOCATION}/#{vm_id}.log","info","returning nodeid #{nodeId}")
+    
     return nodeId
   end
 
 
-######################################
   def get_instance(deploy_id)
-        log("/var/log/one/libcloud_dev","info","get_instance\n #{deploy_id.to_s}") 
+    log("#{LOG_LOCATION}/#{vm_id}.log","info","get_instance\n #{deploy_id.to_s}") 
     command = self.class::PUBLIC_CMD[:get][:cmd]
     
     args = @common_args.clone
@@ -172,10 +173,10 @@ class LibcloudDriver < BurstingDriver
     return info
   end
  
-#######################################
+
   def destroy_instance(deploy_id)
 
-        log("/var/log/one/libcloud_dev","info","destroy_instance\n #{deploy_id.to_s}")
+    log("#{LOG_LOCATION}/#{vm_id}.log","info","destroy_instance\n #{deploy_id.to_s}")
 
     command = self.class::PUBLIC_CMD[:shutdown][:cmd]
     
@@ -188,52 +189,49 @@ class LibcloudDriver < BurstingDriver
     begin
       rc = do_command("#{@cli_cmd} #{command} #{args} 2>/dev/null")
      
-	hash = JSON.parse(info)
-	hash['data'][0]['state']='deleted'
-	info = hash.to_json
+      hash = JSON.parse(info)
+      hash['data'][0]['state']='deleted'
+      info = hash.to_json
 
-	log("/var/log/one/libcloud_dev","info","info: #{info}\nreturn code: #{rc}") 
-	raise "Instance #{id} does not exist" if !rc
-    
-	privateAddresses = JSON.parse(info)['data'][0]['private_ips'] 
-	privateAddresses.each { |ip|
-                context_id = ip.gsub(".", "-")
-		remove_context(context_id)
-        }
+      log("#{LOG_LOCATION}/#{vm_id}.log","info","info: #{info}\nreturn code: #{rc}") 
+      raise "Instance #{id} does not exist" if !rc
+  
+      privateAddresses = JSON.parse(info)['data'][0]['private_ips'] 
+      privateAddresses.each { |ip|
+              context_id = ip.gsub(".", "-")
+              remove_context(context_id)
+      }
 
-	volumesAttached = JSON.parse(info)['data'][0]['extra']['volumes_attached']
-	if volumesAttached
+      volumesAttached = JSON.parse(info)['data'][0]['extra']['volumes_attached']
+      
+      if volumesAttached
+        # while the node is running
+        # timeout is set to 5 minutes
+        timeout_in_seconds = 5*60
+        Timeout.timeout(timeout_in_seconds) do
+          loop do
+            log("#{LOG_LOCATION}/#{vm_id}.log","info","waiting for the node to die")
+            rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{deploy_id}\' 2>/dev/null")
+            break if JSON.parse(info)['message']
+            log("#{LOG_LOCATION}/#{vm_id}.log","info","info: #{JSON.parse(info)['message'].to_s}")
+          end
+        end
 
-        	# while the node is running
-	        # timeout is set to 5 minutes
-        	timeout_in_seconds = 5*60
-	        Timeout.timeout(timeout_in_seconds) do
-        	        loop do
-                	  log("/var/log/one/libcloud_dev","info","waiting for the node to die")
-	                  rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{deploy_id}\' 2>/dev/null")
-			  break if JSON.parse(info)['message']
-			  log("/var/log/one/libcloud_dev","info","info: #{JSON.parse(info)['message'].to_s}")
-			end
-        	end
-
-
-
-		for volume in volumesAttached do
-			log("/var/log/one/libcloud_dev","info","destroying volume: #{volume['id'].to_s}  \n #{@cli_cmd} destroy-volume #{@common_args} -v \'#{volume['id'].to_s}\' 2>/dev/null")
-			rc,info = do_command("#{@cli_cmd} destroy-volume #{@common_args} -v \'#{volume['id'].to_s}\' ")
-			raise "An error occured while destroying volume #{volume['id'].to_s} message: #{JSON.parse(info)['message']}" if !rc
-     			log("/var/log/one/libcloud_dev","info","volume #{volume['id'].to_s} #{JSON.parse(info)['message'].to_s} destroyed")
-		end 
-	end
-    rescue => e
-      STDERR.puts e.message
-        exit(-1)
-    end
-
+        for volume in volumesAttached do
+          log("#{LOG_LOCATION}/#{vm_id}.log","info","destroying volume: #{volume['id'].to_s}  \n #{@cli_cmd} destroy-volume #{@common_args} -v \'#{volume['id'].to_s}\' 2>/dev/null")
+          rc,info = do_command("#{@cli_cmd} destroy-volume #{@common_args} -v \'#{volume['id'].to_s}\' ")
+          raise "An error occured while destroying volume #{volume['id'].to_s} message: #{JSON.parse(info)['message']}" if !rc
+          log("#{LOG_LOCATION}/#{vm_id}.log","info","volume #{volume['id'].to_s} #{JSON.parse(info)['message'].to_s} destroyed")
+        end 
+      end
+      rescue => e
+        STDERR.puts e.message
+          exit(-1)
+      end
     return info
   end
 
-#####################################
+
   def monitor_all_vms(host_id)
 
     totalmemory = 0
@@ -300,10 +298,10 @@ class LibcloudDriver < BurstingDriver
 
   end
 
-#####################################
+
   def parse_poll(instance_info)
 
-	log("/var/log/one/libcloud_dev","info","parse_poll\n #{instance_info.to_s}")
+    log("#{LOG_LOCATION}/#{vm_id}.log","info","parse_poll\n #{instance_info.to_s}")
 
     info =  "#{POLL_ATTRIBUTE[:usedmemory]}=0 " \
             "#{POLL_ATTRIBUTE[:usedcpu]}=0 " \
@@ -337,18 +335,18 @@ class LibcloudDriver < BurstingDriver
           value_str = value
         end
 
-	# TODO: In the case of _PUBLICADDRESSES or _PRIVATEADDRESSES keys, handle the case in which multiple addresses are passed.
-	# Use comma-separated list (e.g., interface to E-CEO portal)
-#        info << "LIBCLOUD_#{key.to_s.upcase}=#{value_str.gsub("\"","")} "
-	info << "LIBCLOUD_#{key.to_s.upcase}=#{value_str.join(",")} "
+        # TODO: In the case of _PUBLICADDRESSES or _PRIVATEADDRESSES keys,
+        # handle the case in which multiple addresses are passed.
+        # Use comma-separated list (e.g., interface to E-CEO portal)
+        info << "LIBCLOUD_#{key.to_s.upcase}=#{value_str.join(",")} "
 
       end
     }
 
-	log("/var/log/one/libcloud_dev","info","poll returning:\n #{info.to_s}")
+        log("#{LOG_LOCATION}/#{vm_id}.log","info","poll returning:\n #{info.to_s}")
     return info
   end
- #########################################
+
 private
 
   def do_command(cmd)
