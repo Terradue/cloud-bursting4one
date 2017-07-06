@@ -24,7 +24,7 @@ done
 
 
     # libcloudcli
-    /opt/miniconda2/bin/conda remove libcloudcli -y
+    /opt/anaconda/bin/conda remove libcloudcli -y
 
 
 exit 0
