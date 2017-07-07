@@ -37,15 +37,21 @@ class LibcloudDriver < BurstingDriver
         "IMAGEID" => {
           :opt => '--image'
         },
-#        "GROUP" => {
-#          :opt => '--group'
-#        },
         "NETWORKS" => {
           :opt => '--networks'
         },
         "POOL" => {
           :opt => '--floatingippool'
-        }
+        },
+        "VOLUMESIZE" => {
+          :opt => '--size'
+        },
+        "VOLUMETYPE" => {
+          :opt => '--type'
+        },
+        "VOLUMEDEVICE" => {
+          :opt => '--device'
+        },
       },
     },
     :get => {
@@ -136,13 +142,42 @@ class LibcloudDriver < BurstingDriver
         end
       end
 
+      # checking if there is a volume to create and attach
+      # if yes, attach volume to the vm
+      volumeTypeOption = '--type'
+      volumeSizeOption = '--size'
+      volumeDeviceOption = '--device'
+      volumeTypeValue = opts[volumeTypeOption]
+      volumeSizeValue = opts[volumeSizeOption]
+      volumeDeviceValue = opts[volumeDeviceOption]
+
+      if (volumeTypeValue) && (volumeSizeValue) && (volumeDeviceValue)
+    
+        # creating a new volume
+        rc, volumeinfo = do_command("#{@cli_cmd} create-volume  #{volumeTypeOption} \'#{volumeTypeValue}\' #{volumeSizeOption} \'#{volumeSizeValue}\' --name \'one-#{vm_id}\' --json 2>/dev/null")
+
+        # retrieving the volume id
+        volumeId = JSON.parse(volumeinfo)['data']['id']
+        raise "Error creating the volume" if !volumeId
+        
+        # attaching volume to the vm
+        rc, volumeinfo = do_command("#{@cli_cmd} attach-volume  --volumeId \'#{volumeId}\' --id \'#{nodeId}\' #{volumeDeviceOption} \'#{volumeDeviceValue}\' 2>/dev/null")
+      end
+
+
       raise "Error creating the instance" if !rc
     rescue => e
-       log("#{LOG_LOCATION}/#{vm_id}.log","error", "### ERROR\n An error occured " + e.message)
+      log("#{LOG_LOCATION}/#{vm_id}.log","error", "### ERROR\n An error occured " + e.message)
       STDERR.puts e.message
-        exit(-1)
+
+      # detroying the vm
+      self.destroy_instance(nodeId)
+
+       exit(-1)
     end
     
+
+
     privateAddresses.each { |ip|
       context_id = ip.gsub(".", "-") 
       create_context(context_xml, context_id) 
