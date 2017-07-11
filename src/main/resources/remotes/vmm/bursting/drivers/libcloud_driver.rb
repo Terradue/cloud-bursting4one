@@ -365,7 +365,7 @@ class LibcloudDriver < BurstingDriver
         # TODO: In the case of _PUBLICADDRESSES or _PRIVATEADDRESSES keys,
         # handle the case in which multiple addresses are passed.
         # Use comma-separated list (e.g., interface to E-CEO portal)
-        info << "LIBCLOUD_#{key.to_s.upcase}=#{value_str.join(",")} "
+        info << "LIBCLOUD_#{key.to_s.upcase.sub('PUBLIC_IPS', "PUBLICADDRESSES").sub('PRIVATE_IPS',"PRIVATEADDRESSES")}=#{value_str.join(",")} "
 
       end
     }
