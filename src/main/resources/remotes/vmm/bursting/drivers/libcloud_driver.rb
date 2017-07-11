@@ -37,15 +37,21 @@ class LibcloudDriver < BurstingDriver
         "IMAGEID" => {
           :opt => '--image'
         },
-#        "GROUP" => {
-#          :opt => '--group'
-#        },
         "NETWORKS" => {
           :opt => '--networks'
         },
         "POOL" => {
           :opt => '--floatingippool'
-        }
+        },
+        "VOLUMESIZE" => {
+          :opt => '--size'
+        },
+        "VOLUMETYPE" => {
+          :opt => '--type'
+        },
+        "VOLUMEDEVICE" => {
+          :opt => '--device'
+        },
       },
     },
     :get => {
@@ -104,7 +110,6 @@ class LibcloudDriver < BurstingDriver
 
   def create_instance(vm_id, opts, context_xml)
 
-    log("#{LOG_LOCATION}/#{vm_id}.log","info","creating instance")
     command = self.class::PUBLIC_CMD[:run][:cmd]
     
     args = @common_args.clone
@@ -115,34 +120,63 @@ class LibcloudDriver < BurstingDriver
     }
     
     begin
-      log("#{LOG_LOCATION}/#{vm_id}.log","info","#{@cli_cmd} #{command} #{args} --name \'one_#{vm_id}\' 2>/dev/null")
       rc, info = do_command("#{@cli_cmd} #{command} #{args} --name \'one-#{vm_id}\' 2>/dev/null")
 
-      log("#{LOG_LOCATION}/#{vm_id}.log","info","info: #{JSON.parse(info).to_s}")
       nodeId = JSON.parse(info)['data'][0]['id']
       log("#{LOG_LOCATION}/#{vm_id}.log","info","nodeid is #{nodeId.to_s}")
       privateAddresses = JSON.parse(info)['data'][0]['private_ips']     
-       
-      log("#{LOG_LOCATION}/#{vm_id}.log","info","privateAddresses is #{privateAddresses}")
 
       # while the node is not running
       # timeout is set to 5 minutes
       timeout_in_seconds = 5*60
       Timeout.timeout(timeout_in_seconds) do
         while privateAddresses.nil? || privateAddresses.empty?  do
-          log("#{LOG_LOCATION}/#{vm_id}.log","info","waiting for the node to run")
           rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{nodeId}\' 2>/dev/null")
           privateAddresses = JSON.parse(info)['data'][0]['private_ips']
         end
       end
 
+
+      # checking if there is a volume to create and attach
+      # if yes, attach volume to the vm
+      volumeTypeOption = '--type'
+      volumeSizeOption = '--size'
+      volumeDeviceOption = '--device'
+      volumeTypeValue = opts[volumeTypeOption]
+      volumeSizeValue = opts[volumeSizeOption]
+      volumeDeviceValue = opts[volumeDeviceOption]
+
+      if (volumeTypeValue) && (volumeSizeValue) && (volumeDeviceValue)
+
+        # creating a new volume
+        rc, volumeinfo = do_command("#{@cli_cmd} create-volume #{@common_args}  #{volumeTypeOption} \'#{volumeTypeValue}\' #{volumeSizeOption} #{volumeSizeValue} --name \'one-#{vm_id}\' --json 2>/dev/null")
+	raise "Error creating the volume" if !rc
+
+
+	log("#{LOG_LOCATION}/#{vm_id}.log","info","volume creation result code: #{rc}")
+        # retrieving the volume id
+        volumeId = JSON.parse(volumeinfo)['data'][0]['id'].to_s
+
+	log("#{LOG_LOCATION}/#{vm_id}.log","info","volume id is #{volumeId}")      
+
+	log("#{LOG_LOCATION}/#{vm_id}.log","info","attaching volume #{volumeId} to vm \'#{nodeId}\'")
+        # attaching volume to the vm
+        rc, volumeinfo = do_command("#{@cli_cmd} attach-volume #{@common_args}  --volumeId \'#{volumeId}\' --id \'#{nodeId}\' #{volumeDeviceOption} \'#{volumeDeviceValue}\' 2>/dev/null")
+      end
+
+
       raise "Error creating the instance" if !rc
     rescue => e
-       log("#{LOG_LOCATION}/#{vm_id}.log","error", "### ERROR\n An error occured " + e.message)
       STDERR.puts e.message
-        exit(-1)
+
+      # detroying the vm
+      self.destroy_instance(nodeId)
+
+       exit(-1)
     end
     
+
+
     privateAddresses.each { |ip|
       context_id = ip.gsub(".", "-") 
       create_context(context_xml, context_id) 
@@ -155,7 +189,7 @@ class LibcloudDriver < BurstingDriver
 
 
   def get_instance(deploy_id)
-    log("#{LOG_LOCATION}/#{vm_id}.log","info","get_instance\n #{deploy_id.to_s}") 
+    log("#{LOG_LOCATION}/libcloud_dev","info","get_instance\n #{deploy_id.to_s}") 
     command = self.class::PUBLIC_CMD[:get][:cmd]
     
     args = @common_args.clone
@@ -176,7 +210,6 @@ class LibcloudDriver < BurstingDriver
 
   def destroy_instance(deploy_id)
 
-    log("#{LOG_LOCATION}/#{vm_id}.log","info","destroy_instance\n #{deploy_id.to_s}")
 
     command = self.class::PUBLIC_CMD[:shutdown][:cmd]
     
@@ -193,7 +226,6 @@ class LibcloudDriver < BurstingDriver
       hash['data'][0]['state']='deleted'
       info = hash.to_json
 
-      log("#{LOG_LOCATION}/#{vm_id}.log","info","info: #{info}\nreturn code: #{rc}") 
       raise "Instance #{id} does not exist" if !rc
   
       privateAddresses = JSON.parse(info)['data'][0]['private_ips'] 
@@ -210,18 +242,14 @@ class LibcloudDriver < BurstingDriver
         timeout_in_seconds = 5*60
         Timeout.timeout(timeout_in_seconds) do
           loop do
-            log("#{LOG_LOCATION}/#{vm_id}.log","info","waiting for the node to die")
             rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{deploy_id}\' 2>/dev/null")
             break if JSON.parse(info)['message']
-            log("#{LOG_LOCATION}/#{vm_id}.log","info","info: #{JSON.parse(info)['message'].to_s}")
           end
         end
 
         for volume in volumesAttached do
-          log("#{LOG_LOCATION}/#{vm_id}.log","info","destroying volume: #{volume['id'].to_s}  \n #{@cli_cmd} destroy-volume #{@common_args} -v \'#{volume['id'].to_s}\' 2>/dev/null")
           rc,info = do_command("#{@cli_cmd} destroy-volume #{@common_args} -v \'#{volume['id'].to_s}\' ")
           raise "An error occured while destroying volume #{volume['id'].to_s} message: #{JSON.parse(info)['message']}" if !rc
-          log("#{LOG_LOCATION}/#{vm_id}.log","info","volume #{volume['id'].to_s} #{JSON.parse(info)['message'].to_s} destroyed")
         end 
       end
       rescue => e
@@ -301,7 +329,6 @@ class LibcloudDriver < BurstingDriver
 
   def parse_poll(instance_info)
 
-    log("#{LOG_LOCATION}/#{vm_id}.log","info","parse_poll\n #{instance_info.to_s}")
 
     info =  "#{POLL_ATTRIBUTE[:usedmemory]}=0 " \
             "#{POLL_ATTRIBUTE[:usedcpu]}=0 " \
@@ -338,12 +365,11 @@ class LibcloudDriver < BurstingDriver
         # TODO: In the case of _PUBLICADDRESSES or _PRIVATEADDRESSES keys,
         # handle the case in which multiple addresses are passed.
         # Use comma-separated list (e.g., interface to E-CEO portal)
-        info << "LIBCLOUD_#{key.to_s.upcase}=#{value_str.join(",")} "
+        info << "LIBCLOUD_#{key.to_s.upcase.sub('PUBLIC_IPS', "PUBLICADDRESSES").sub('PRIVATE_IPS',"PRIVATEADDRESSES")}=#{value_str.join(",")} "
 
       end
     }
 
-        log("#{LOG_LOCATION}/#{vm_id}.log","info","poll returning:\n #{info.to_s}")
     return info
   end
 
@@ -362,3 +388,4 @@ private
   
 
 end
+
