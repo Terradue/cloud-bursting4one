@@ -90,7 +90,7 @@ class LibcloudDriver < BurstingDriver
     hosts = @public_cloud_conf['hosts']
     @host = hosts[host] || hosts["default"]
     
-    @context_path.concat("/#{@host['provider']}/")
+    @context_path.concat("/#{@host['site']}/")
     
     @common_args = ""
     @common_args.concat("--provider \'#{@host['provider']}\'")
