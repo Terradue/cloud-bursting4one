@@ -120,7 +120,7 @@ class LibcloudDriver < BurstingDriver
     }
     
     begin
-      rc, info = do_command("#{@cli_cmd} #{command} #{args} --name \'one-#{vm_id}\' 2>/dev/null")
+      rc, info = do_command("#{@cli_cmd} #{command} #{args} --name \'one-#{vm_id}\'")
 
       nodeId = JSON.parse(info)['data'][0]['id']
       log("#{LOG_LOCATION}/#{vm_id}.log","info","nodeid is #{nodeId.to_s}")
@@ -131,7 +131,7 @@ class LibcloudDriver < BurstingDriver
       timeout_in_seconds = 5*60
       Timeout.timeout(timeout_in_seconds) do
         while privateAddresses.nil? || privateAddresses.empty?  do
-          rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{nodeId}\' 2>/dev/null")
+          rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{nodeId}\'")
           privateAddresses = JSON.parse(info)['data'][0]['private_ips']
         end
       end
@@ -149,7 +149,7 @@ class LibcloudDriver < BurstingDriver
       if (volumeTypeValue) && (volumeSizeValue) && (volumeDeviceValue)
 
         # creating a new volume
-        rc, volumeinfo = do_command("#{@cli_cmd} create-volume #{@common_args}  #{volumeTypeOption} \'#{volumeTypeValue}\' #{volumeSizeOption} #{volumeSizeValue} --name \'one-#{vm_id}\' --json 2>/dev/null")
+        rc, volumeinfo = do_command("#{@cli_cmd} create-volume #{@common_args}  #{volumeTypeOption} \'#{volumeTypeValue}\' #{volumeSizeOption} #{volumeSizeValue} --name \'one-#{vm_id}\' --json")
 	raise "Error creating the volume" if !rc
 
 
@@ -161,7 +161,7 @@ class LibcloudDriver < BurstingDriver
 
 	log("#{LOG_LOCATION}/#{vm_id}.log","info","attaching volume #{volumeId} to vm \'#{nodeId}\'")
         # attaching volume to the vm
-        rc, volumeinfo = do_command("#{@cli_cmd} attach-volume #{@common_args}  --volumeId \'#{volumeId}\' --id \'#{nodeId}\' #{volumeDeviceOption} \'#{volumeDeviceValue}\' 2>/dev/null")
+        rc, volumeinfo = do_command("#{@cli_cmd} attach-volume #{@common_args}  --volumeId \'#{volumeId}\' --id \'#{nodeId}\' #{volumeDeviceOption} \'#{volumeDeviceValue}\'")
       end
 
 
@@ -197,7 +197,7 @@ class LibcloudDriver < BurstingDriver
     args.concat(" --id #{deploy_id}")
 
     begin
-      rc,info = do_command("#{@cli_cmd} #{command} #{args} 2>/dev/null")
+      rc,info = do_command("#{@cli_cmd} #{command} #{args}")
       raise "Instance #{deploy_id} does not exist" if JSON.parse(info)['message'] 
     rescue => e
       STDERR.puts e.message
@@ -220,7 +220,7 @@ class LibcloudDriver < BurstingDriver
     args.concat(" --id #{deploy_id}")
 
     begin
-      rc = do_command("#{@cli_cmd} #{command} #{args} 2>/dev/null")
+      rc = do_command("#{@cli_cmd} #{command} #{args}")
      
       hash = JSON.parse(info)
       hash['data'][0]['state']='deleted'
@@ -242,7 +242,7 @@ class LibcloudDriver < BurstingDriver
         timeout_in_seconds = 5*60
         Timeout.timeout(timeout_in_seconds) do
           loop do
-            rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{deploy_id}\' 2>/dev/null")
+            rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{deploy_id}\'")
             break if JSON.parse(info)['message']
           end
         end
