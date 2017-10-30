@@ -127,8 +127,8 @@ class LibcloudDriver < BurstingDriver
       privateAddresses = JSON.parse(info)['data'][0]['private_ips']     
 
       # while the node is not running
-      # timeout is set to 5 minutes
-      timeout_in_seconds = 5*60
+      # timeout is set to 15 minutes
+      timeout_in_seconds = 15*60
       Timeout.timeout(timeout_in_seconds) do
         while privateAddresses.nil? || privateAddresses.empty?  do
           rc, info = do_command("#{@cli_cmd} find-node #{args} --id \'#{nodeId}\'")
