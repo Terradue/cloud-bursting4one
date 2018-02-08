@@ -1,6 +1,6 @@
 # cloud-bursting4one
 
-The cloud-bursting4one driver is an OpenNebula add-on that implements hybrid Cloud computing, with the ability to support Cloud bursting on a variety of public Cloud providers. Its modular design eases the integration of new Cloud provider APIs. Currently it supports the [Apache Jclouds library](<https://jclouds.apache.org/>) and the [CloudStack API](<https://cloudstack.apache.org/>). Future developments will support the [OCCI API](http://occi-wg.org/).
+The cloud-bursting4one driver is an OpenNebula add-on that implements hybrid Cloud computing, with the ability to support Cloud bursting on a variety of public Cloud providers. Its modular design eases the integration of new Cloud provider APIs. Currently it supports the [Apache Jclouds library](<https://jclouds.apache.org/>), the [CloudStack API](<https://cloudstack.apache.org/>), the [OCCI API](http://occi-wg.org/), and the [Openstack API](https://developer.openstack.org/api-guide/quick-start/).
 It is a generalization of the previous Opennebula add-on [jclouds4one](https://github.com/OpenNebula/addon-jclouds4one).
 This work has been co-funded by the European Commission (EC) in the context of the FP7 [SenSyF](<http://www.sensyf.eu>) project.
 
@@ -11,7 +11,7 @@ This work has been co-funded by the European Commission (EC) in the context of t
 
 ## Compatibility
 
-This add-on is compatible with OpenNebula 4.10.
+This add-on is compatible with OpenNebula 4.12.
 
 ## Features
 
@@ -78,6 +78,8 @@ The cloud-bursting4one driver includes the following APIs:
 
 * jclouds
 * cloudstack
+* occi
+* libcloud
 
 ## API driver configuration
 
